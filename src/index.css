@@ -1,0 +1,43 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    @apply bg-slate-50 text-slate-900 font-sans;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    @apply font-heading;
+  }
+}
+
+@layer components {
+  .hero-watermark {
+    @apply absolute right-8 top-1/2 -translate-y-1/2 font-brand select-none pointer-events-none;
+    color: rgba(255, 255, 255, 0.04);
+    font-size: clamp(8rem, 18vw, 16rem);
+    letter-spacing: 0.1em;
+    line-height: 1;
+  }
+
+  .stat-strip {
+    @apply bg-navy-950 text-white;
+  }
+
+  .nav-link {
+    @apply text-slate-700 hover:text-navy-900 font-medium transition-colors;
+  }
+
+  .nav-link-active {
+    @apply text-navy-900 bg-slate-100 px-3 py-1.5 rounded-md;
+  }
+}

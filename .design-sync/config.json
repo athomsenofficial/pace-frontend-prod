@@ -1,0 +1,43 @@
+{
+  "projectId": "a7c629bd-4e18-4fde-b9de-855559fad90b",
+  "shape": "package",
+  "pkg": "pace-frontend-test",
+  "globalName": "PaceUI",
+  "tsconfig": "tsconfig.app.json",
+  "buildCmd": "npx tailwindcss -c ./.design-sync/tailwind.ds.js -i ./src/index.css -o ./.design-sync/ds-styles.css --minify",
+  "cssEntry": ".design-sync/ds-styles.css",
+  "readmeHeader": ".design-sync/conventions.md",
+  "extraFonts": [
+    "node_modules/@fontsource/inter/400.css",
+    "node_modules/@fontsource/inter/500.css",
+    "node_modules/@fontsource/inter/600.css",
+    "node_modules/@fontsource/inter/700.css",
+    "node_modules/@fontsource/poppins/400.css",
+    "node_modules/@fontsource/poppins/600.css",
+    "node_modules/@fontsource/poppins/700.css",
+    "node_modules/@fontsource/black-ops-one/400.css"
+  ],
+  "componentSrcMap": {
+    "Badge": "src/components/ui/Badge.tsx",
+    "Button": "src/components/ui/Button.tsx",
+    "Card": "src/components/ui/Card.tsx",
+    "Input": "src/components/ui/Input.tsx",
+    "Modal": "src/components/ui/Modal.tsx",
+    "Select": "src/components/ui/Select.tsx",
+    "Table": "src/components/ui/Table.tsx",
+    "Tabs": "src/components/ui/Tabs.tsx"
+  },
+  "overrides": {
+    "Modal": { "cardMode": "single", "primaryStory": "AddMember", "viewport": "760x480" }
+  },
+  "dtsPropsFor": {
+    "Badge": "children: React.ReactNode;\n  /** Color scheme of the badge. */\n  color?: 'neutral' | 'navy' | 'green' | 'red' | 'amber' | 'blue' | 'teal';\n  className?: string;",
+    "Button": "/** Visual style. */\n  variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger' | 'white';\n  size?: 'sm' | 'md' | 'lg';\n  /** Icon rendered before the label. */\n  leftIcon?: React.ReactNode;\n  /** Icon rendered after the label. */\n  rightIcon?: React.ReactNode;\n  /** Shows a loading indicator and disables the button. */\n  loading?: boolean;\n  children?: React.ReactNode;\n  className?: string;\n  disabled?: boolean;\n  type?: 'button' | 'submit' | 'reset';\n  onClick?: React.MouseEventHandler<HTMLButtonElement>;\n  /** All native <button> attributes are also accepted. */\n  [key: string]: unknown;",
+    "Card": "children: React.ReactNode;\n  className?: string;\n  /** Compose with CardHeader, CardBody, and CardFooter (also on window.PaceUI). All native <div> attributes are accepted. */\n  [key: string]: unknown;",
+    "Input": "/** Label rendered above the field. */\n  label?: string;\n  /** Error message; also applies error styling to the field. */\n  error?: string;\n  /** Helper text shown below the field when there is no error. */\n  hint?: string;\n  className?: string;\n  type?: string;\n  placeholder?: string;\n  value?: string | number;\n  defaultValue?: string | number;\n  disabled?: boolean;\n  onChange?: React.ChangeEventHandler<HTMLInputElement>;\n  /** All native <input> attributes are also accepted. */\n  [key: string]: unknown;",
+    "Modal": "/** Controls visibility. The modal renders nothing when false. */\n  open: boolean;\n  /** Called on backdrop click, close button, or Escape. */\n  onClose: () => void;\n  title?: React.ReactNode;\n  description?: React.ReactNode;\n  children: React.ReactNode;\n  /** Footer content, typically action buttons. */\n  footer?: React.ReactNode;\n  size?: 'sm' | 'md' | 'lg' | 'xl';",
+    "Select": "/** Label rendered above the field. */\n  label?: string;\n  /** Error message; also applies error styling to the field. */\n  error?: string;\n  /** Helper text shown below the field when there is no error. */\n  hint?: string;\n  /** Convenience option list; alternatively pass <option> children. */\n  options?: Array<{ value: string; label: string }>;\n  children?: React.ReactNode;\n  className?: string;\n  value?: string | number;\n  defaultValue?: string | number;\n  disabled?: boolean;\n  onChange?: React.ChangeEventHandler<HTMLSelectElement>;\n  /** All native <select> attributes are also accepted. */\n  [key: string]: unknown;",
+    "Table": "children: React.ReactNode;\n  className?: string;\n  /** Compose with THead, TBody, TR, TH, and TD (also on window.PaceUI). All native <table> attributes are accepted. */\n  [key: string]: unknown;",
+    "Tabs": "/** Tab definitions. Each item has a value, a label, and an optional count badge. */\n  items: Array<{ value: string; label: React.ReactNode; count?: number }>;\n  /** The value of the currently active tab. */\n  value: string;\n  /** Called with the value of the tab the user selects. */\n  onChange: (value: string) => void;\n  className?: string;"
+  }
+}
