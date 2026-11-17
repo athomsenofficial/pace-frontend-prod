@@ -2,42 +2,308 @@
 @tailwind components;
 @tailwind utilities;
 
+/* =====================================================================
+   PACE tokens: Air Force palette (light).
+   Layout, type and component rules follow docs/design/pace-concept.html;
+   only the colours changed (owner direction, 17-NOV-2026).
+
+   Values are space-separated RGB channels so Tailwind opacity modifiers
+   work (bg-primary/10). Use them in CSS as rgb(var(--token)).
+
+   Contrast (WCAG 2.x) measured with a node script against the grounds
+   listed. Text pairs are >= 4.5:1, control borders / focus >= 3:1.
+   ===================================================================== */
+:root {
+  color-scheme: light;
+
+  /* Neutrals: cool silver / grey family */
+  --ground: 243 245 248;      /* #F3F5F8 page ground */
+  --surface: 255 255 255;     /* #FFFFFF panels, tables, dialogs */
+  --surface-2: 232 236 241;   /* #E8ECF1 table head, CUI strip */
+  --line: 213 218 225;        /* #D5DAE1 hairlines (decorative only) */
+  --line-strong: 180 188 200; /* #B4BCC8 stronger hairline, kbd */
+  --ctrl: 123 133 148;        /* #7B8594 input border: 3.73 on white, 3.42 on ground */
+  --silver: 162 170 173;      /* #A2AAAD accent only (rules, separators), never text */
+  --ink: 17 24 39;            /* #111827 headings: 17.74 white / 16.24 ground */
+  --ink-2: 55 65 81;          /* #374151 body: 10.31 / 9.44 / 8.69 on surface-2 */
+  --ink-3: 82 92 107;         /* #525C6B meta: 6.77 / 6.20 / 5.71 on surface-2 */
+
+  /* Air Force blue. #00308F is the USAF blue value listed on Wikipedia's
+     "Air Force blue" article. OWNER TO VERIFY against the official
+     Department of the Air Force brand guide before release. */
+  --primary: 0 48 143;        /* #00308F white on it 11.54; as text on white 11.54 */
+  --primary-hover: 0 34 102;  /* #002266 white on it 14.78 */
+  --primary-tint: 230 236 247;/* #E6ECF7 selected ground; primary text on it 9.9 */
+  --navy: 11 35 80;           /* #0B2350 top bar, hero overlay, footer: white 15.32 */
+  --navy-2: 19 48 106;        /* #13306A hover on navy surfaces */
+  --on-navy: 255 255 255;
+  --on-navy-2: 197 208 227;   /* #C5D0E3 muted text on navy: 9.85 */
+
+  /* Air Force yellow / gold: used sparingly (eyebrow rule, current-step
+     edge, active nav underline on navy). Never text on light grounds. */
+  --gold: 255 199 44;         /* #FFC72C 9.82 against navy */
+
+  /* Focus ring: 4.34 white, 3.97 ground, 3.65 surface-2, 3.53 navy.
+     Always drawn with a 2px offset so it sits on the surrounding ground. */
+  --focus: 58 116 232;        /* #3A74E8 */
+
+  /* Category colours: a dot, a 3px edge or a tint, never a filled tile */
+  --elig: 29 107 64;          /* #1D6B40 6.50 on white, 5.53 on tint */
+  --elig-tint: 226 240 231;   /* #E2F0E7 */
+  --inel: 179 38 30;          /* #B3261E 6.54 on white, 5.54 on tint, 5.98 ground */
+  --inel-tint: 251 232 230;   /* #FBE8E6 */
+  --disc: 176 122 8;          /* #B07A08 dot / edge: 3.73 on white */
+  --disc-ink: 131 86 0;       /* #835600 text: 6.37 on white, 5.62 on tint */
+  --disc-tint: 251 240 213;   /* #FBF0D5 */
+  --btz: 15 118 110;          /* #0F766E teal (not blue): 5.47 on white */
+  --btz-ink: 13 101 96;       /* #0D6560 5.83 on tint */
+  --btz-tint: 221 240 238;    /* #DDF0EE */
+  --small: 123 133 148;       /* #7B8594 slate-silver dot: 3.73 on white */
+  --small-ink: 70 80 97;      /* #465061 8.14 on white, 6.86 on tint */
+  --small-tint: 232 236 241;  /* #E8ECF1 */
+  --error: 179 38 30;         /* = inel */
+
+  --scrim: 11 35 80;          /* navy, used at 55% */
+  --shadow-1: 0 1px 2px rgb(17 24 39 / 0.06), 0 8px 24px rgb(17 24 39 / 0.12);
+  --r-1: 4px;
+  --r-2: 8px;
+  --d-1: 120ms;
+  --ease-out: cubic-bezier(0.2, 0, 0, 1);
+  --font-display: "Newsreader", "Iowan Old Style", Georgia, serif;
+  --font-sans: "Instrument Sans", ui-sans-serif, system-ui, "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, Consolas, "Courier New", monospace;
+}
+
 @layer base {
   html {
+    -webkit-text-size-adjust: 100%;
+    text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
 
   body {
-    @apply bg-slate-50 text-slate-900 font-sans;
+    margin: 0;
+    background: rgb(var(--ground));
+    color: rgb(var(--ink-2));
+    font-family: var(--font-sans);
+    font-size: 15px;
+    line-height: 1.5;
+    overflow-x: hidden;
   }
 
   h1,
   h2,
   h3,
   h4 {
-    @apply font-heading;
+    color: rgb(var(--ink));
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  a {
+    text-underline-offset: 4px;
+    text-decoration-thickness: 1px;
+  }
+
+  :focus-visible {
+    outline: 2px solid rgb(var(--focus));
+    outline-offset: 2px;
+  }
+
+  ::selection {
+    background: rgb(var(--focus) / 0.22);
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    color: rgb(var(--ink-3));
+    opacity: 1;
+  }
+
+  kbd {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    line-height: 1;
+    padding: 3px 5px;
+    border: 1px solid rgb(var(--line-strong));
+    border-bottom-width: 2px;
+    border-radius: 3px;
+    background: rgb(var(--surface));
+    color: rgb(var(--ink-2));
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      transition-duration: 0.01ms !important;
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      scroll-behavior: auto !important;
+    }
   }
 }
 
 @layer components {
-  .hero-watermark {
-    @apply absolute right-8 top-1/2 -translate-y-1/2 font-brand select-none pointer-events-none;
-    color: rgba(255, 255, 255, 0.04);
-    font-size: clamp(8rem, 18vw, 16rem);
-    letter-spacing: 0.1em;
+  /* Page title: Newsreader, titles only */
+  .page-title {
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: 30px;
+    line-height: 1.1;
+    letter-spacing: -0.005em;
+    color: rgb(var(--ink));
+  }
+  @media (max-width: 600px) {
+    .page-title {
+      font-size: 25px;
+    }
+  }
+
+  .section-title {
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: 26px;
+    line-height: 1.15;
+    color: rgb(var(--ink));
+  }
+
+  /* Eyebrow: caps label with a 20x2 gold rule */
+  .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgb(var(--ink-2));
     line-height: 1;
   }
-
-  .stat-strip {
-    @apply bg-navy-950 text-white;
+  .eyebrow::before {
+    content: "";
+    width: 20px;
+    height: 2px;
+    background: rgb(var(--gold));
+    flex: none;
+  }
+  .eyebrow-on-navy {
+    color: rgb(var(--on-navy-2));
   }
 
-  .nav-link {
-    @apply text-slate-700 hover:text-navy-900 font-medium transition-colors;
+  /* Panel: hairline card, no shadow */
+  .panel {
+    background: rgb(var(--surface));
+    border: 1px solid rgb(var(--line));
+    border-radius: var(--r-2);
   }
 
-  .nav-link-active {
-    @apply text-navy-900 bg-slate-100 px-3 py-1.5 rounded-md;
+  .code {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    letter-spacing: 0;
+  }
+  .num {
+    font-variant-numeric: tabular-nums lining-nums;
+  }
+
+  /* Status tag: the only pill shape. Set --dot via the t-* class. */
+  .tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    height: 22px;
+    padding: 0 9px;
+    border-radius: 999px;
+    border: 1px solid rgb(var(--line));
+    background: rgb(var(--surface));
+    font-size: 12px;
+    font-weight: 500;
+    color: rgb(var(--ink-2));
+    white-space: nowrap;
+  }
+  .tag::before {
+    content: "";
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--dot, rgb(var(--ink-3)));
+    flex: none;
+  }
+  .t-elig { --dot: rgb(var(--elig)); }
+  .t-inel { --dot: rgb(var(--inel)); }
+  .t-disc { --dot: rgb(var(--disc)); }
+  .t-btz { --dot: rgb(var(--btz)); }
+  .t-small { --dot: rgb(var(--small)); }
+  .t-primary { --dot: rgb(var(--primary)); }
+
+  /* Square caps badge (e.g. OVERRIDE) */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    height: 20px;
+    padding: 0 6px;
+    border-radius: 3px;
+    border: 1px solid rgb(var(--primary));
+    color: rgb(var(--primary));
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  /* Message box: hairline + 3px left edge */
+  .msg {
+    border: 1px solid rgb(var(--line));
+    border-left: 3px solid rgb(var(--line-strong));
+    border-radius: var(--r-1);
+    background: rgb(var(--surface));
+    padding: 12px 14px;
+    font-size: 14px;
+    color: rgb(var(--ink-2));
+  }
+  .msg b,
+  .msg strong {
+    color: rgb(var(--ink));
+  }
+  .msg-error { border-left-color: rgb(var(--error)); }
+  .msg-info { border-left-color: rgb(var(--primary)); }
+  .msg-warn { border-left-color: rgb(var(--disc)); }
+  .msg-ok { border-left-color: rgb(var(--elig)); }
+
+  /* Visually hidden */
+  .vh {
+    position: absolute !important;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+    border: 0;
+  }
+}
+
+/* Menu drawer: slides in from the right. Reduced motion: no slide. */
+@keyframes drawer-in {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+.drawer-in {
+  animation: drawer-in 200ms cubic-bezier(0.2, 0, 0, 1);
+}
+@media (prefers-reduced-motion: reduce) {
+  .drawer-in {
+    animation: none;
   }
 }

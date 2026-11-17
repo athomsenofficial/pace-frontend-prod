@@ -1,11 +1,9 @@
 import { useEffect, useState } from "react";
-import { ArrowRight, Download, FileText, FileSpreadsheet, Files } from "lucide-react";
-import { Badge } from "@/components/ui/Badge";
-import { Card, CardBody } from "@/components/ui/Card";
+import { ArrowLeft, ArrowRight, Download, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/Button";
-import { StepIndicator } from "@/features/mel/StepIndicator";
+import { WizardShell, MetaLine, PageHeader, ActionBar, type RailStep } from "@/features/mel/WizardShell";
 import { UploadStep } from "@/features/mel/UploadStep";
-import { ReviewStep } from "@/features/mel/ReviewStep";
+import { ReviewStep, type ReviewSummary } from "@/features/mel/ReviewStep";
 import { api } from "@/lib/api";
 import { cn, downloadBlob } from "@/lib/utils";
 import type { MpfFormat } from "@/types";
@@ -19,8 +17,6 @@ interface SessionData {
   raw: Record<string, unknown>;
 }
 
-const STEPS = ["Upload Roster", "Review & Edit", "Select Format", "Download PDF"];
-
 const MPF_CYCLES = [
   { value: "SRA", label: "Senior Airman (SRA)" },
   { value: "SSG", label: "Staff Sergeant (SSG)" },
@@ -31,7 +27,6 @@ const MPF_CYCLES = [
 
 interface FormatOption {
   value: MpfFormat;
-  icon: React.ReactNode;
   label: string;
   desc: string;
   filenameTag: string;
@@ -40,26 +35,25 @@ interface FormatOption {
 const FORMAT_OPTIONS: FormatOption[] = [
   {
     value: "list",
-    icon: <FileSpreadsheet className="w-5 h-5 text-primary" />,
-    label: "MPF List Only",
+    label: "MPF list only",
     desc: "Simple roster listing: Name, Grade, Unit, DAFSC, DOR, TAFMSD",
     filenameTag: "MPF_List",
   },
   {
     value: "mel",
-    icon: <FileText className="w-5 h-5 text-success" />,
-    label: "MEL Format Only",
+    label: "MEL format only",
     desc: "Master Eligibility List format with full eligibility determinations",
     filenameTag: "MEL",
   },
   {
     value: "both",
-    icon: <Files className="w-5 h-5 text-accent" />,
-    label: "MPF List + MEL",
-    desc: "MPF List and MEL merged into a single PDF document",
+    label: "MPF list + MEL",
+    desc: "MPF list and MEL merged into a single PDF document",
     filenameTag: "MPF_Both",
   },
 ];
+
+const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
 
 export default function MpfRoster() {
   const [step, setStep] = useState(0);
@@ -69,6 +63,8 @@ export default function MpfRoster() {
   const [downloading, setDownloading] = useState(false);
   const [downloaded, setDownloaded] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [fileName, setFileName] = useState<string | null>(null);
+  const [summary, setSummary] = useState<ReviewSummary | null>(null);
 
   const reset = () => {
     setStep(0);
@@ -76,6 +72,8 @@ export default function MpfRoster() {
     setFormat("both");
     setDownloaded(false);
     setError(null);
+    setFileName(null);
+    setSummary(null);
   };
 
   const generate = async () => {
@@ -137,29 +135,67 @@ export default function MpfRoster() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [step]);
 
+  const cycleYear = session ? `${session.cycle} · ${session.year}` : null;
+  const meta = (n: number) => <MetaLine parts={[`Step ${n} of 4`, "MPF roster", cycleYear]} />;
+  const units = session?.pascodes.length ?? 0;
+  const steps: RailStep[] = [
+    {
+      label: "Upload roster",
+      status:
+        step > 0
+          ? [summary ? plural(summary.total, "member", "members") : null, units ? plural(units, "unit", "units") : null]
+              .filter(Boolean)
+              .join(", ") || "Uploaded"
+          : "Choose cycle and file",
+    },
+    {
+      label: "Review & edit",
+      status:
+        step < 1
+          ? "After upload"
+          : step === 1 && summary && summary.discrepancy > 0
+            ? `${plural(summary.discrepancy, "discrepancy", "discrepancies")} to review`
+            : step === 1
+              ? "Check each category"
+              : "Reviewed",
+      warn: step === 1 && !!summary && summary.discrepancy > 0,
+    },
+    {
+      label: "Select format",
+      status: step >= 2 ? FORMAT_OPTIONS.find((f) => f.value === format)?.label : "List, MEL or both",
+    },
+    { label: "Download PDF", status: step === 3 ? (downloaded ? "Downloaded" : "Ready") : "CUI-marked" },
+  ];
+
+  const startOver = () => {
+    if (window.confirm("Start over with a new file? Your edits for this session will be cleared.")) reset();
+  };
+
   return (
-    <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-      <div>
-        <div className="flex flex-wrap items-center gap-3">
-          <h1 className="text-3xl font-bold text-slate-900">
-            MPF Roster Distribution
-          </h1>
-          <Badge color="navy">Step {step + 1} of 4</Badge>
-        </div>
-        <p className="text-slate-600 mt-2">
-          Upload a roster to generate an MPF list, MEL format, or both as a
-          merged PDF.
-        </p>
-      </div>
-
-      <StepIndicator steps={STEPS} current={step} />
-
+    <WizardShell
+      kind="MPF roster"
+      kindValue={cycleYear ?? "New listing"}
+      steps={steps}
+      current={step}
+      onStepClick={step === 3 ? undefined : (i) => (i === 0 ? startOver() : setStep(i))}
+      session={
+        session
+          ? [
+              { label: "Cycle", value: session.cycle },
+              { label: "Year", value: session.year },
+              ...(fileName ? [{ label: "File", value: fileName }] : []),
+            ]
+          : undefined
+      }
+      onStartOver={session ? startOver : undefined}
+    >
       {step === 0 ? (
         <UploadStep
           type="mpf-roster"
-          title="MPF Roster"
+          title="MPF roster"
           cycles={MPF_CYCLES}
-          onSuccess={(data, cycle, year) => {
+          meta={meta(1)}
+          onSuccess={(data, cycle, year, name) => {
             const d = data as unknown as {
               session_id: string;
               pascodes?: string[];
@@ -173,6 +209,8 @@ export default function MpfRoster() {
               year,
               raw: data as unknown as Record<string, unknown>,
             });
+            setFileName(name ?? null);
+            setSummary(null);
             setStep(1);
           }}
         />
@@ -187,111 +225,117 @@ export default function MpfRoster() {
             year: session.year,
           } as Parameters<typeof ReviewStep>[0]["sessionData"]}
           showLogo={false}
+          meta={meta(2)}
+          continueLabel="Continue to format"
+          onSummaryChange={setSummary}
           onContinue={() => setStep(2)}
           onBack={() => setStep(0)}
         />
       ) : null}
 
       {step === 2 && session ? (
-        <div className="space-y-4">
-          <Card>
-            <CardBody>
-              <h2 className="text-xl font-semibold text-slate-900">
-                MPF Roster Output Formats
-              </h2>
-              <p className="text-sm text-slate-600">
-                This tool generates up to two separate documents. Pick the
-                format your MPF needs.
-              </p>
-            </CardBody>
-          </Card>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {FORMAT_OPTIONS.map((opt) => {
-              const selected = format === opt.value;
-              return (
-                <button
-                  key={opt.value}
-                  type="button"
-                  onClick={() => setFormat(opt.value)}
-                  className={cn(
-                    "rounded-lg border-2 bg-white text-left p-5 transition-colors",
-                    selected
-                      ? "border-primary/30 bg-primary/5"
-                      : "border-slate-200 hover:border-slate-300",
-                  )}
-                >
-                  <div className="flex items-center gap-2 mb-2">
-                    {opt.icon}
-                    <span className="font-semibold text-slate-900">
-                      {opt.label}
+        <>
+          <PageHeader
+            meta={meta(3)}
+            title="Choose the output format"
+            description="This tool generates up to two separate documents. Pick the format your MPF needs."
+          />
+          <fieldset className="mt-6 min-w-0">
+            <legend className="vh">Output format</legend>
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+              {FORMAT_OPTIONS.map((opt) => {
+                const selected = format === opt.value;
+                return (
+                  <label
+                    key={opt.value}
+                    className={cn(
+                      "relative flex cursor-pointer gap-3 rounded-2 border bg-surface p-4 transition-colors duration-1",
+                      selected
+                        ? "border-primary shadow-[inset_0_0_0_1px_rgb(var(--primary))]"
+                        : "border-line hover:border-ink-3",
+                    )}
+                  >
+                    <input
+                      type="radio"
+                      name="mpf-format"
+                      value={opt.value}
+                      checked={selected}
+                      onChange={() => setFormat(opt.value)}
+                      className="mt-1 h-4 w-4 shrink-0 accent-primary"
+                    />
+                    <span>
+                      <span className="block font-semibold text-ink">{opt.label}</span>
+                      <span className="mt-1 block text-sm text-ink-3">{opt.desc}</span>
                     </span>
-                  </div>
-                  <p className="text-sm text-slate-600">{opt.desc}</p>
-                </button>
-              );
-            })}
-          </div>
+                  </label>
+                );
+              })}
+            </div>
+          </fieldset>
 
           {error ? (
-            <div className="rounded-md bg-danger/10 border border-danger/30 px-3 py-2 text-sm text-danger">
+            <div role="alert" className="msg msg-error mt-4">
               {error}
             </div>
           ) : null}
 
-          <div className="flex justify-between">
-            <Button variant="outline" onClick={() => setStep(1)} disabled={submitting}>
-              Back
-            </Button>
-            <Button
-              variant="primary"
-              size="lg"
-              onClick={generate}
-              loading={submitting}
-              rightIcon={<ArrowRight className="h-4 w-4" />}
-            >
-              Generate PDF
-            </Button>
-          </div>
-        </div>
+          <div className="flex-1" />
+          <ActionBar
+            back={
+              <Button
+                variant="tertiary"
+                onClick={() => setStep(1)}
+                disabled={submitting}
+                leftIcon={<ArrowLeft />}
+              >
+                Back to review
+              </Button>
+            }
+            status={`${FORMAT_OPTIONS.find((f) => f.value === format)?.label} selected.`}
+            primary={
+              <Button onClick={generate} loading={submitting} rightIcon={<ArrowRight />}>
+                Generate PDF
+              </Button>
+            }
+          />
+        </>
       ) : null}
 
       {step === 3 && session ? (
-        <Card>
-          <CardBody className="space-y-6 text-center py-10">
-            <div className="mx-auto h-16 w-16 rounded-full bg-success/10 flex items-center justify-center">
-              <FileText className="h-8 w-8 text-success" />
+        <>
+          <PageHeader
+            meta={meta(4)}
+            title="Download the PDF"
+            description="The document is CUI-marked. Store and send it the way your unit handles CUI."
+          />
+          <div role="status" className="msg msg-ok mt-6 max-w-2xl">
+            <b>Your MPF roster is ready.</b>{" "}
+            {downloaded
+              ? "The download started. If it didn't, use Download PDF below."
+              : downloading
+                ? "Preparing the download…"
+                : "Use Download PDF below to save it."}
+          </div>
+          {error ? (
+            <div role="alert" className="msg msg-error mt-4 max-w-2xl">
+              {error}
             </div>
-            <div>
-              <h2 className="text-2xl font-semibold text-slate-900">
-                Your MPF Roster is ready
-              </h2>
-              <p className="text-sm text-slate-600 mt-2 max-w-xl mx-auto">
-                Select a format and download your MPF roster PDF.
-              </p>
-            </div>
-            {error ? (
-              <div className="rounded-md bg-danger/10 border border-danger/30 px-3 py-2 text-sm text-danger max-w-md mx-auto">
-                {error}
-              </div>
-            ) : null}
-            <div className="flex justify-center gap-3 flex-wrap">
-              <Button
-                variant="primary"
-                size="lg"
-                onClick={download}
-                loading={downloading}
-                leftIcon={<Download className="h-4 w-4" />}
-              >
-                {downloaded ? "Download again" : "Download PDF"}
-              </Button>
-              <Button variant="outline" size="lg" onClick={reset}>
+          ) : null}
+          <div className="flex-1" />
+          <ActionBar
+            back={
+              <Button variant="tertiary" onClick={reset} leftIcon={<RotateCcw />}>
                 Start a new session
               </Button>
-            </div>
-          </CardBody>
-        </Card>
+            }
+            primary={
+              <Button onClick={download} loading={downloading} leftIcon={<Download />}>
+                {downloaded ? "Download again" : "Download PDF"}
+              </Button>
+            }
+          />
+        </>
       ) : null}
-    </div>
+    </WizardShell>
   );
 }

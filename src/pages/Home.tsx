@@ -1,605 +1,326 @@
+import { useEffect, useRef, useState, type MouseEvent } from "react";
 import { Link } from "react-router-dom";
-import {
-  ArrowRight,
-  BookOpen,
-  ClipboardCheck,
-  FileCheck2,
-  Calculator,
-  Clock,
-  Layers,
-  ShieldCheck,
-  Sparkles,
-  Users,
-  Building2,
-  UserCheck,
-  Briefcase,
-  FileText,
-  CheckCircle2,
-  Award,
-  Lock,
-  Compass,
-  Flag,
-} from "lucide-react";
+import { ArrowDown, ArrowRight, BookOpen, Pause, Play } from "lucide-react";
+import { buttonClasses } from "@/components/ui/Button";
+import { TOOL_COUNT, TOOL_GROUPS } from "@/lib/tools";
 
 export default function Home() {
   return (
     <div>
       <Hero />
-      <StatStrip />
-      <Tools />
-      <PolicySection />
-      <Audiences />
-      <Workflow />
-      <CtaFooter />
+      <Facts />
+      <ToolGrid />
+      <Principles />
+      <CtaBand />
     </div>
   );
 }
 
-/* ---------- Hero ---------- */
+/* ---------- Hero with background video ---------- */
 
+function usePrefersReducedMotion() {
+  const [reduced, setReduced] = useState(() =>
+    typeof window !== "undefined" && window.matchMedia
+      ? window.matchMedia("(prefers-reduced-motion: reduce)").matches
+      : false,
+  );
+  useEffect(() => {
+    if (!window.matchMedia) return;
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const on = () => setReduced(mq.matches);
+    mq.addEventListener?.("change", on);
+    return () => mq.removeEventListener?.("change", on);
+  }, []);
+  return reduced;
+}
+
+/**
+ * Full-width hero. The background is a muted, looping F-22 clip under a flat navy
+ * overlay. Media files (not in the repo yet):
+ *   public/media/hero-f22.webm, public/media/hero-f22.mp4, public/media/hero-poster.jpg
+ * Until they exist the hero falls back to the solid navy container background.
+ * Reduced motion: no autoplay. A visible pause / play control is always offered
+ * once the clip loads (WCAG 2.2.2).
+ */
 function Hero() {
+  const reduced = usePrefersReducedMotion();
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [available, setAvailable] = useState(false);
+  const [playing, setPlaying] = useState(false);
+
+  useEffect(() => {
+    const v = videoRef.current;
+    if (!v) return;
+    // React does not reliably reflect `muted` as an attribute; set the property
+    // so browsers allow autoplay.
+    v.muted = true;
+    if (reduced) {
+      v.pause();
+      return;
+    }
+    v.play().catch(() => {
+      /* autoplay blocked or no source: the navy ground stays */
+    });
+  }, [reduced]);
+
+  const browseTools = (e: MouseEvent<HTMLAnchorElement>) => {
+    const target = document.getElementById("tools-h");
+    if (!target) return;
+    e.preventDefault();
+    target.scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "start" });
+    target.focus({ preventScroll: true });
+  };
+
+  const toggle = () => {
+    const v = videoRef.current;
+    if (!v) return;
+    if (v.paused) {
+      v.play().catch(() => undefined);
+    } else {
+      v.pause();
+    }
+  };
+
   return (
-    <div className="relative bg-gradient-to-br from-primary-dark via-primary to-primary-light overflow-hidden">
-      <div
-        className="absolute inset-0 opacity-10"
-        style={{
-          backgroundImage:
-            "linear-gradient(rgba(255,255,255,0.15) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.15) 1px, transparent 1px)",
-          backgroundSize: "40px 40px",
-        }}
-      />
-      <div className="absolute right-0 top-0 bottom-0 hidden md:flex items-center pr-12 pointer-events-none select-none">
-        <span className="text-[12rem] font-black text-white/5 leading-none">
-          PACE
-        </span>
-      </div>
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
-        <div className="max-w-2xl">
-          <div className="inline-flex items-center gap-2 bg-white/10 border border-white/20 rounded-full px-4 py-1.5 mb-6">
-            <ShieldCheck className="w-3.5 h-3.5 text-gold" />
-            <span className="text-white/90 text-xs font-semibold uppercase tracking-widest">
-              Department of the Air Force
-            </span>
-          </div>
-          <h1 className="text-5xl sm:text-6xl font-black text-white leading-tight mb-4">
-            Personnel &amp;
-            <br />
-            <span className="text-gold-light">Administrative</span>
-            <br />
-            Collaboration Engine
-          </h1>
-          <p className="text-white/80 text-lg leading-relaxed mb-8 max-w-xl">
-            Automate MEL roster processing, check individual eligibility, and
-            generate compliant documents — built for Air Force HR professionals.
-          </p>
-          <div className="flex flex-wrap gap-4">
-            <Link
-              to="/features"
-              className="inline-flex items-center gap-2 bg-white text-primary-dark font-bold px-7 py-3.5 rounded-xl hover:bg-gold-light hover:text-primary-dark transition-colors shadow-lg"
-            >
-              <Sparkles className="w-5 h-5" />
-              Explore Features
-            </Link>
-            <Link
-              to="/how-to"
-              className="inline-flex items-center gap-2 bg-white/10 border border-white/30 text-white font-semibold px-7 py-3.5 rounded-xl hover:bg-white/20 transition-colors"
-            >
-              <BookOpen className="w-5 h-5" />
-              How To Guide
-            </Link>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* ---------- Stat strip ---------- */
-
-interface Stat {
-  icon: React.ReactNode;
-  value: string;
-  label: string;
-  sub: string;
-}
-
-const STATS: Stat[] = [
-  {
-    icon: <Users className="w-5 h-5 text-gold mx-auto mb-1" />,
-    value: "—",
-    label: "Roster Slots Checked",
-    sub: "Total eligibility checks run",
-  },
-  {
-    icon: <FileCheck2 className="w-5 h-5 text-gold mx-auto mb-1" />,
-    value: "—",
-    label: "PDF Packets Generated",
-    sub: "MEL packets produced",
-  },
-  {
-    icon: <Layers className="w-5 h-5 text-gold mx-auto mb-1" />,
-    value: "6",
-    label: "Promotion Cycles",
-    sub: "SSG · TSG · MSG · SMS · CMSgt · CCC",
-  },
-  {
-    icon: <Clock className="w-5 h-5 text-gold mx-auto mb-1" />,
-    value: "4–6 hrs",
-    label: "Saved Per Cycle",
-    sub: "vs. manual MEL processing",
-  },
-];
-
-function StatStrip() {
-  return (
-    <div className="bg-slate-900 text-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-          {STATS.map((s) => (
-            <div key={s.label} className="py-2">
-              {s.icon}
-              <p className="text-3xl font-black text-white">{s.value}</p>
-              <p className="text-sm font-semibold text-white mt-1">{s.label}</p>
-              <p className="text-xs text-slate-400 mt-0.5">{s.sub}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* ---------- Section header ---------- */
-
-function SectionHeader({
-  number,
-  title,
-  subtitle,
-}: {
-  number: string;
-  title: string;
-  subtitle: string;
-}) {
-  return (
-    <div className="flex items-start gap-4 mb-6">
-      <span className="text-5xl font-black text-slate-100 leading-none select-none">
-        {number}
-      </span>
-      <div className="pt-1">
-        <h2 className="text-2xl font-bold text-slate-900">{title}</h2>
-        <p className="text-slate-500 text-sm mt-0.5">{subtitle}</p>
-      </div>
-    </div>
-  );
-}
-
-/* ---------- Tool card ---------- */
-
-interface ToolCardProps {
-  to: string;
-  icon: React.ReactNode;
-  iconBg: string;
-  title: string;
-  description: string;
-  tag?: string;
-  tagColor?: string;
-}
-
-function ToolCard({
-  to,
-  icon,
-  iconBg,
-  title,
-  description,
-  tag,
-  tagColor,
-}: ToolCardProps) {
-  return (
-    <Link
-      to={to}
-      className="group flex flex-col bg-white rounded-xl border border-slate-200 shadow-sm hover:shadow-lg hover:border-primary/40 transition-all duration-200 p-6"
+    <section
+      aria-labelledby="hero-title"
+      className="relative isolate overflow-hidden bg-navy text-white"
     >
-      <div className="flex items-start justify-between mb-4">
-        <div className={`p-3 rounded-xl ${iconBg}`}>{icon}</div>
-        {tag ? (
-          <span
-            className={`text-xs font-semibold px-2.5 py-1 rounded-full ${tagColor}`}
+      <video
+        ref={videoRef}
+        className="absolute inset-0 -z-20 h-full w-full object-cover"
+        poster="/media/hero-poster.jpg"
+        muted
+        loop
+        playsInline
+        autoPlay={!reduced}
+        preload={reduced ? "metadata" : "auto"}
+        aria-hidden="true"
+        tabIndex={-1}
+        onLoadedMetadata={() => setAvailable(true)}
+        onPlay={() => setPlaying(true)}
+        onPause={() => setPlaying(false)}
+      >
+        <source src="/media/hero-f22.webm" type="video/webm" />
+        <source src="/media/hero-f22.mp4" type="video/mp4" />
+      </video>
+      {/* Flat navy overlay (no gradient): keeps white text >= 7:1 on any frame. */}
+      <div aria-hidden="true" className="absolute inset-0 -z-10 bg-navy/[0.78]" />
+
+      <div className="mx-auto max-w-[1440px] px-4 pb-16 pt-14 sm:px-6 sm:pb-24 sm:pt-20 lg:pb-28 lg:pt-24">
+        <div className="max-w-2xl">
+          <span className="eyebrow eyebrow-on-navy">Department of the Air Force</span>
+          <h1
+            id="hero-title"
+            className="mt-5 font-display font-normal leading-[1.02] text-white"
           >
-            {tag}
-          </span>
-        ) : null}
-      </div>
-      <h3 className="font-bold text-slate-900 text-lg mb-1.5 group-hover:text-primary transition-colors">
-        {title}
-      </h3>
-      <p className="text-slate-500 text-sm leading-relaxed flex-1">
-        {description}
-      </p>
-      <div className="flex items-center gap-1 mt-4 text-primary text-sm font-medium">
-        Open tool{" "}
-        <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
-      </div>
-    </Link>
-  );
-}
-
-/* ---------- Tools (sections 01/02/03) ---------- */
-
-function Tools() {
-  return (
-    <div className="bg-slate-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 space-y-16">
-        <section>
-          <SectionHeader
-            number="01"
-            title="Master Eligibility List"
-            subtitle="Upload a roster file and generate promotion board MEL packets as PDF"
-          />
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <ToolCard
-              to="/initial-mel"
-              icon={<ClipboardCheck className="w-6 h-6 text-primary" />}
-              iconBg="bg-primary/10"
-              title="Initial MEL"
-              description="Upload a member roster to automatically run TIG, TIS, HYT, and AFSC eligibility checks and produce the Initial Master Eligibility Listing."
-              tag="Most Used"
-              tagColor="bg-primary/10 text-primary"
-            />
-            <ToolCard
-              to="/final-mel"
-              icon={<FileCheck2 className="w-6 h-6 text-success" />}
-              iconBg="bg-success/10"
-              title="Final MEL"
-              description="Generate the Final Master Eligibility Listing with senior rater signature block and CUI-compliant PDF output for board submission."
-            />
-            <ToolCard
-              to="/mpf-roster"
-              icon={<Layers className="w-6 h-6 text-accent" />}
-              iconBg="bg-accent/10"
-              title="MPF Roster"
-              description="Upload a roster to generate an MPF list, MEL format, or both as a merged PDF."
-            />
-          </div>
-        </section>
-
-        <section>
-          <SectionHeader
-            number="02"
-            title="Eligibility Calculators"
-            subtitle="Individual member checks for promotion and Below-the-Zone eligibility"
-          />
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <ToolCard
-              to="/calculators/promotion"
-              icon={<Calculator className="w-6 h-6 text-special" />}
-              iconBg="bg-special/10"
-              title="Promotion Eligibility"
-              description="Enter a member's DOR and TAFMSD to verify TIG, TIS, and High Year Tenure requirements for any promotion cycle year."
-            />
-            <ToolCard
-              to="/calculators/btz"
-              icon={<Calculator className="w-6 h-6 text-gold" />}
-              iconBg="bg-gold/10"
-              title="BTZ Eligibility"
-              description="Determine Below-the-Zone A1C→SRA board quarter, 20-month TIG consideration window, and 36-month TIS exclusion rule."
-              tag="A1C → SRA"
-              tagColor="bg-gold/10 text-gold"
-            />
-          </div>
-        </section>
-
-        <section>
-          <SectionHeader
-            number="03"
-            title="Document Generation"
-            subtitle="Create properly formatted Air Force documents and correspondence"
-          />
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <ToolCard
-              to="/memo-generator"
-              icon={<FileText className="w-6 h-6 text-accent" />}
-              iconBg="bg-accent/10"
-              title="Memorandum for Record"
-              description="Generate a properly formatted AF MFR per AFH 33-337 (The Tongue and Quill) with correct header, numbered paragraphs, and right-indented signature block."
-              tag="New"
-              tagColor="bg-accent/10 text-accent"
-            />
-          </div>
-        </section>
-      </div>
-    </div>
-  );
-}
-
-/* ---------- Policy / WAPS section (dark) ---------- */
-
-interface Policy {
-  icon: React.ReactNode;
-  title: string;
-  desc: string;
-}
-
-const POLICIES: Policy[] = [
-  {
-    icon: <Award className="w-6 h-6 text-gold" />,
-    title: "Policy Aligned",
-    desc: "Built against current DAFI 36-2502 promotion policy, HYT limits, and TIG/TIS requirements.",
-  },
-  {
-    icon: <Lock className="w-6 h-6 text-gold" />,
-    title: "CUI Compliant",
-    desc: "PDF outputs include proper CUI headers, footers, and classification markings required for board submission.",
-  },
-  {
-    icon: <Compass className="w-6 h-6 text-gold" />,
-    title: "Full Cycle Coverage",
-    desc: "Supports SSG, TSG, MSG, SMS, CMSgt, and CCC promotion cycles with per-rank rule sets.",
-  },
-  {
-    icon: <Flag className="w-6 h-6 text-gold" />,
-    title: "Discrepancy Flagging",
-    desc: "Automatically identifies members requiring manual review with specific reason codes.",
-  },
-];
-
-function PolicySection() {
-  return (
-    <div className="bg-slate-900 text-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
-          <div>
-            <h2 className="text-3xl font-black text-white mb-6">
-              Built for the WAPS cycle
-            </h2>
-            <p className="text-slate-300 leading-relaxed mb-6">
-              The Weighted Airman Promotion System (WAPS) governs how Airmen
-              compete for promotion to Staff Sergeant through Senior Master
-              Sergeant. Central to every cycle is the Master Eligibility List —
-              a time-intensive document that requires precise eligibility
-              determination for every competing member.
-            </p>
-            <p className="text-slate-400 leading-relaxed">
-              PACE was built to take the manual work out of MEL production:
-              upload a roster, get a policy-compliant PDF. What used to take an
-              MPF shop 4–6 hours per cycle now takes minutes.
-            </p>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            {POLICIES.map((p) => (
-              <div
-                key={p.title}
-                className="bg-white/5 border border-white/10 rounded-xl p-5"
-              >
-                <div className="mb-3">{p.icon}</div>
-                <h3 className="font-bold text-white text-sm mb-1.5">
-                  {p.title}
-                </h3>
-                <p className="text-slate-400 text-xs leading-relaxed">
-                  {p.desc}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* ---------- Audience cards ---------- */
-
-interface Audience {
-  icon: React.ReactNode;
-  bg: string;
-  role: string;
-  desc: string;
-  tools: string[];
-}
-
-const AUDIENCES: Audience[] = [
-  {
-    icon: <Building2 className="w-8 h-8 text-primary" />,
-    bg: "bg-primary/5 border-primary/20",
-    role: "MPF / CSS Shops",
-    desc: "Military Personnel Flights and Commander Support Staffs responsible for producing and validating MEL packets for their unit.",
-    tools: ["Initial MEL", "Final MEL"],
-  },
-  {
-    icon: <UserCheck className="w-8 h-8 text-special" />,
-    bg: "bg-special/5 border-special/20",
-    role: "Unit HR & First Sergeants",
-    desc: "First Sergeants and unit HR reps who need to verify individual member eligibility before a board or during mid-cycle counseling.",
-    tools: ["Promotion Eligibility", "BTZ Eligibility"],
-  },
-  {
-    icon: <Briefcase className="w-8 h-8 text-accent" />,
-    bg: "bg-accent/5 border-accent/20",
-    role: "Supervisors & Leadership",
-    desc: "Flight commanders, superintendents, and supervisors generating official correspondence such as memoranda for record.",
-    tools: ["Memorandum for Record"],
-  },
-];
-
-function Audiences() {
-  return (
-    <div className="bg-white border-t border-slate-100">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-        <div className="text-center mb-14">
-          <h2 className="text-3xl font-black text-slate-900 mb-3">
-            Who uses PACE?
-          </h2>
-          <p className="text-slate-500 max-w-xl mx-auto">
-            Designed for the people responsible for managing Air Force
-            promotion boards and personnel records
+            <span className="block text-[56px] font-semibold tracking-[0.06em] sm:text-[80px]">
+              PACE
+            </span>
+            <span className="mt-2 block text-[24px] leading-tight text-navy-on-2 sm:text-[30px]">
+              Personnel &amp; Administrative Collaboration Engine
+            </span>
+          </h1>
+          <p className="mt-5 max-w-xl text-[17px] leading-relaxed text-white">
+            A suite of personnel tools for Commander Support Staff and unit admin: promotion
+            listings, retention and BTZ rosters, eligibility calculators and memoranda.
           </p>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {AUDIENCES.map((a) => (
-            <div key={a.role} className={`rounded-xl border ${a.bg} p-7`}>
-              <div className="mb-4">{a.icon}</div>
-              <h3 className="font-bold text-slate-900 text-lg mb-2">
-                {a.role}
-              </h3>
-              <p className="text-slate-500 text-sm leading-relaxed mb-5">
-                {a.desc}
-              </p>
-              <div className="space-y-1.5">
-                {a.tools.map((t) => (
-                  <div
-                    key={t}
-                    className="flex items-center gap-2 text-xs text-slate-600"
-                  >
-                    <CheckCircle2 className="w-3.5 h-3.5 text-success shrink-0" />
-                    {t}
-                  </div>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* ---------- WAPS cycle workflow ---------- */
-
-interface Phase {
-  phase: string;
-  color: string;
-  title: string;
-  desc: string;
-  tool: string;
-  toolTo: string;
-}
-
-const PHASES: Phase[] = [
-  {
-    phase: "01",
-    color: "bg-primary",
-    title: "Eligibility Determination",
-    desc: "Unit CSS / MPF runs the initial roster through TIG, TIS, HYT, and AFSC checks to build the Initial MEL.",
-    tool: "Initial MEL",
-    toolTo: "/initial-mel",
-  },
-  {
-    phase: "02",
-    color: "bg-special",
-    title: "Individual Verification",
-    desc: "Members or supervisors verify individual eligibility dates before the board cutoff using the promotion calculator.",
-    tool: "Promotion Eligibility",
-    toolTo: "/calculators/promotion",
-  },
-  {
-    phase: "03",
-    color: "bg-gold",
-    title: "Final Packet Submission",
-    desc: "CSS produces the Final MEL with senior rater signature block for submission to the promotion board.",
-    tool: "Final MEL",
-    toolTo: "/final-mel",
-  },
-  {
-    phase: "04",
-    color: "bg-accent",
-    title: "Correspondence & Records",
-    desc: "Post-board memos, notifications, and records actions are documented with properly formatted MFRs.",
-    tool: "Memorandum Generator",
-    toolTo: "/memo-generator",
-  },
-];
-
-function Workflow() {
-  return (
-    <div className="bg-slate-50 border-t border-slate-200">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
-          <div>
-            <h2 className="text-3xl font-black text-slate-900 mb-3">
-              How a typical WAPS cycle flows
-            </h2>
-            <p className="text-slate-500 leading-relaxed mb-6">
-              WAPS promotion cycles run on an annual calendar. Understanding
-              when each phase occurs helps units stay ahead of board submission
-              deadlines.
-            </p>
-            <p className="text-slate-500 leading-relaxed mb-8">
-              PACE automates the most labor-intensive step — determining which
-              members are eligible — so HR professionals can focus on the parts
-              that require human judgement.
-            </p>
-            <Link
-              to="/how-to"
-              className="inline-flex items-center gap-2 bg-primary text-white font-semibold px-5 py-2.5 rounded-lg hover:bg-primary-dark transition-colors"
-            >
-              <BookOpen className="w-4 h-4" />
-              Read the How To Guide
-              <ArrowRight className="w-4 h-4" />
+          <div className="mt-8 flex flex-wrap gap-3">
+            <a href="#tools" onClick={browseTools} className={buttonClasses("white", "lg")}>
+              Browse tools
+              <ArrowDown className="h-4 w-4" aria-hidden="true" />
+            </a>
+            <Link to="/rosters" className={buttonClasses("on-navy", "lg")}>
+              Roster tools
             </Link>
           </div>
-          <div className="space-y-4">
-            {PHASES.map((p) => (
-              <div
-                key={p.phase}
-                className="flex gap-4 bg-white border border-slate-200 rounded-xl p-5 shadow-sm"
-              >
-                <div
-                  className={`${p.color} text-white text-xs font-black w-8 h-8 rounded-lg flex items-center justify-center shrink-0`}
-                >
-                  {p.phase}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-bold text-slate-900 text-sm mb-1">
-                    {p.title}
-                  </h3>
-                  <p className="text-slate-500 text-xs leading-relaxed mb-2">
-                    {p.desc}
-                  </p>
-                  <Link
-                    to={p.toolTo}
-                    className="inline-flex items-center gap-1 text-xs text-primary font-semibold hover:underline"
-                  >
-                    {p.tool}{" "}
-                    <ArrowRight className="w-3 h-3" />
-                  </Link>
-                </div>
-              </div>
-            ))}
-          </div>
         </div>
       </div>
+
+      {available ? (
+        <div className="absolute inset-x-0 bottom-0">
+          <div className="mx-auto flex max-w-[1440px] flex-wrap items-end justify-between gap-2 px-4 pb-3 sm:px-6">
+            <p className="text-[11px] text-navy-on-2">
+              F-22 Demo Team, Seoul ADEX 23 &middot; U.S. Army video by Sgt Elijah Florence (public domain)
+            </p>
+            <button
+              type="button"
+              onClick={toggle}
+              className="inline-flex h-8 items-center gap-1.5 rounded-1 border border-white/50 px-2.5 text-[13px] text-white hover:border-white"
+            >
+              {playing ? (
+                <Pause className="h-3.5 w-3.5" aria-hidden="true" />
+              ) : (
+                <Play className="h-3.5 w-3.5" aria-hidden="true" />
+              )}
+              {playing ? "Pause video" : "Play video"}
+            </button>
+          </div>
+        </div>
+      ) : null}
+    </section>
+  );
+}
+
+/* ---------- Suite facts (no metrics, just what is true of every tool) ---------- */
+
+const FACTS = [
+  { value: `${TOOL_COUNT} tools`, label: "Promotions, retention, calculators, correspondence" },
+  { value: "Nothing stored", label: "Roster files are processed in memory, not kept" },
+  { value: "CUI-marked", label: "PDF and Excel output, marked for handling" },
+];
+
+function Facts() {
+  return (
+    <div className="border-b border-line bg-surface">
+      <dl className="mx-auto grid max-w-[1440px] grid-cols-1 divide-y divide-line px-4 sm:grid-cols-3 sm:divide-x sm:divide-y-0 sm:px-6">
+        {FACTS.map((f) => (
+          <div key={f.value} className="flex items-baseline gap-3 py-4 sm:px-6 sm:first:pl-0">
+            <dt className="num shrink-0 text-lg font-semibold text-ink">{f.value}</dt>
+            <dd className="m-0 text-sm text-ink-3">{f.label}</dd>
+          </div>
+        ))}
+      </dl>
     </div>
   );
 }
 
-/* ---------- Final CTA ---------- */
+/* ---------- Tool grid, grouped by job ---------- */
 
-function CtaFooter() {
+function ToolGrid() {
   return (
-    <div className="bg-gradient-to-r from-primary-dark to-primary">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 text-center">
-        <h2 className="text-3xl font-black text-white mb-3">
-          Ready to run your next MEL?
+    <section aria-labelledby="tools-h" id="tools" className="mx-auto w-full max-w-[1440px] px-4 py-14 sm:px-6">
+      <div className="mb-8 border-b border-line pb-4">
+        <span className="eyebrow">The suite</span>
+        <h2 id="tools-h" tabIndex={-1} className="section-title mt-3 scroll-mt-4 focus:outline-none">
+          Tools by job
         </h2>
-        <p className="text-white/70 mb-8 max-w-lg mx-auto">
-          Upload your roster and have a policy-compliant PDF in minutes.
+        <p className="mt-1.5 max-w-[64ch] text-sm text-ink-3">
+          The{" "}
+          <Link to="/rosters" className="text-primary underline">
+            roster tools
+          </Link>{" "}
+          take the alpha roster export when you run them. Each file is processed in memory for that
+          run and is not kept.
         </p>
-        <div className="flex flex-wrap justify-center gap-4">
-          <Link
-            to="/initial-mel"
-            className="inline-flex items-center gap-2 bg-white text-primary-dark font-bold px-7 py-3.5 rounded-xl hover:bg-primary-50 transition-colors shadow-lg"
-          >
-            <ClipboardCheck className="w-5 h-5" />
-            Start Initial MEL
+      </div>
+      <div className="grid gap-12">
+        {TOOL_GROUPS.map((g, gi) => (
+          <section key={g.id} aria-labelledby={`grp-${g.id}`}>
+            <div className="mb-4 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+              <h3 id={`grp-${g.id}`} className="text-lg font-semibold text-ink">
+                <span className="num mr-2 text-ink-3">{String(gi + 1).padStart(2, "0")}</span>
+                {g.label}
+              </h3>
+              <p className="text-sm text-ink-3">{g.intro}</p>
+            </div>
+            <ul className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+              {g.tools.map((t) => (
+                <li key={t.to} className="panel flex min-w-0 flex-col p-5">
+                  <h4 className="text-base font-semibold text-ink">{t.name}</h4>
+                  <p className="mt-2 flex-1 text-sm leading-relaxed text-ink-2">{t.description}</p>
+                  {t.duty ? (
+                    <p className="mt-3 text-[13px] text-ink-3">
+                      <span className="font-semibold uppercase tracking-[0.08em] text-[11px]">
+                        Supports
+                      </span>{" "}
+                      {t.duty}
+                    </p>
+                  ) : null}
+                  <Link
+                    to={t.to}
+                    className="mt-4 inline-flex items-center gap-1.5 self-start text-sm font-medium text-primary underline decoration-primary/30 underline-offset-4 hover:decoration-primary"
+                  >
+                    Open {t.name}
+                    <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </section>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+/* ---------- How the suite works (navy) ---------- */
+
+const PRINCIPLES = [
+  {
+    title: "Rules with citations",
+    desc: "Each roster run lists the DAFI paragraph or local setting behind its rules, and marks values to verify against the current publication.",
+  },
+  {
+    title: "Nothing stored",
+    desc: "Roster tools process your file in memory for each run and don't keep it. The MEL tools hold a roster only while you edit it.",
+  },
+  {
+    title: "CUI-marked output",
+    desc: "PDF and Excel exports carry CUI markings. Store and send them the way your unit handles CUI.",
+  },
+  {
+    title: "Screening aid",
+    desc: "PACE does the sorting and date math. The MPF and the commander make the final determination.",
+  },
+];
+
+function Principles() {
+  return (
+    <section aria-labelledby="how-h" className="bg-navy text-navy-on-2">
+      <div className="mx-auto grid max-w-[1440px] grid-cols-1 items-start gap-12 px-4 py-16 sm:px-6 lg:grid-cols-2">
+        <div>
+          <span className="eyebrow eyebrow-on-navy">How it works</span>
+          <h2 id="how-h" className="section-title mt-3 !text-white">
+            Built for the CSS workload
+          </h2>
+          <p className="mt-5 leading-relaxed">
+            Most CSS rosters start from the same alpha roster export. PACE reads it, applies the
+            published rules and hands back a list you can act on, with the reason for every
+            call.
+          </p>
+          <Link to="/how-to" className={buttonClasses("on-navy", "md", "mt-6")}>
+            <BookOpen className="h-4 w-4" aria-hidden="true" />
+            Read the how-to guide
           </Link>
-          <Link
-            to="/how-to"
-            className="inline-flex items-center gap-2 bg-white/10 border border-white/30 text-white font-semibold px-7 py-3.5 rounded-xl hover:bg-white/20 transition-colors"
-          >
-            <BookOpen className="w-5 h-5" />
-            How To Guide
+        </div>
+        <ul className="grid grid-cols-1 gap-x-8 sm:grid-cols-2">
+          {PRINCIPLES.map((p) => (
+            <li key={p.title} className="border-t border-white/15 py-5">
+              <h3 className="text-[15px] font-semibold text-white">{p.title}</h3>
+              <p className="mt-1.5 text-sm leading-relaxed">{p.desc}</p>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </section>
+  );
+}
+
+/* ---------- Final call to action ---------- */
+
+function CtaBand() {
+  return (
+    <section aria-labelledby="cta-h" className="border-t border-line bg-surface">
+      <div className="mx-auto flex max-w-[1440px] flex-col items-start justify-between gap-6 px-4 py-12 sm:px-6 md:flex-row md:items-center">
+        <div>
+          <h2 id="cta-h" className="section-title">
+            Run a roster from your alpha roster
+          </h2>
+          <p className="mt-1.5 text-ink-3">
+            DOS / Reenlistment, DEROS Option, RE code, CJR window and BTZ rosters, one file per run.
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-3">
+          <Link to="/features" className={buttonClasses("tertiary", "md")}>
+            See every tool
+          </Link>
+          <Link to="/rosters" className={buttonClasses("primary", "md")}>
+            Roster tools
+            <ArrowRight className="h-4 w-4" aria-hidden="true" />
           </Link>
         </div>
       </div>
-    </div>
+    </section>
   );
 }

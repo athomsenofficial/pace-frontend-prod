@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState } from "react";
-import { Calendar } from "lucide-react";
-import { cn, parseFlexibleDate, formatDateReadable } from "@/lib/utils";
+import { useEffect, useId, useState } from "react";
+import { cn, parseFlexibleDate, formatDateMil } from "@/lib/utils";
+import { FieldLabel, FieldMessage, controlClasses } from "./Field";
 
 interface SmartDateInputProps {
   label?: string;
@@ -10,12 +10,18 @@ interface SmartDateInputProps {
   onChange: (canonical: string) => void;
   hint?: string;
   placeholder?: string;
+  id?: string;
+  optional?: boolean | string;
+  edited?: boolean;
+  /** External error (e.g. required and empty after a submit attempt). */
+  error?: string;
 }
 
 /**
- * Date field you can just TYPE into — accepts "15 Mar 2024", "03/15/2024",
- * "2024-03-15", etc. — with a calendar button for clicking instead. Emits a
- * canonical "YYYY-MM-DD" string to the parent.
+ * Date field you TYPE into, shown as DD-MMM-YYYY (01-MAR-2024). Lenient parsing on
+ * blur / Enter: "3/1/24", "2024-03-01", "1 mar 24" all become 01-MAR-2024. No native
+ * date picker (they behave differently on government Edge/Chrome builds).
+ * Emits a canonical "YYYY-MM-DD" string to the parent; never uses toISOString.
  */
 export function SmartDateInput({
   label,
@@ -23,15 +29,20 @@ export function SmartDateInput({
   onChange,
   hint,
   placeholder,
+  id,
+  optional,
+  edited,
+  error,
 }: SmartDateInputProps) {
-  const [text, setText] = useState<string>(() => formatDateReadable(value));
+  const auto = useId();
+  const inputId = id ?? `date-${auto}`;
+  const [text, setText] = useState<string>(() => formatDateMil(value));
   const [invalid, setInvalid] = useState(false);
-  const pickerRef = useRef<HTMLInputElement>(null);
 
-  // Keep the display in sync when the parent value changes (e.g. modal opens
-  // with existing data, or the calendar picker is used).
+  // Keep the display in sync when the parent value changes (e.g. dialog opens
+  // with existing data).
   useEffect(() => {
-    setText(formatDateReadable(value));
+    setText(formatDateMil(value));
     setInvalid(false);
   }, [value]);
 
@@ -42,60 +53,38 @@ export function SmartDateInput({
       return; // keep what they typed, flag it, don't emit a bad value
     }
     setInvalid(false);
+    setText(formatDateMil(parsed));
     onChange(parsed);
   };
 
+  const shownError = invalid ? "Use DD-MMM-YYYY, like 01-MAR-2024." : error;
+  const msgId = `${inputId}-msg`;
+
   return (
-    <div className="w-full">
+    <div className="w-full min-w-0">
       {label ? (
-        <label className="block text-sm font-medium text-slate-700 mb-1">
+        <FieldLabel htmlFor={inputId} optional={optional} edited={edited}>
           {label}
-        </label>
+        </FieldLabel>
       ) : null}
-      <div className="relative">
-        <input
-          type="text"
-          value={text}
-          placeholder={placeholder ?? "e.g. 15 Mar 2024 or 03/15/2024"}
-          onChange={(e) => setText(e.target.value)}
-          onBlur={(e) => commit(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") commit((e.target as HTMLInputElement).value);
-          }}
-          className={cn(
-            "w-full rounded-md border border-slate-300 bg-white px-3 py-2 pr-10 text-sm",
-            "placeholder:text-slate-400",
-            "focus:outline-none focus:ring-2 focus:ring-navy-500 focus:border-transparent",
-            invalid && "border-red-500 focus:ring-red-500",
-          )}
-        />
-        <button
-          type="button"
-          tabIndex={-1}
-          aria-label="Open calendar"
-          onClick={() => pickerRef.current?.showPicker?.()}
-          className="absolute inset-y-0 right-0 flex items-center px-2.5 text-slate-400 hover:text-slate-600"
-        >
-          <Calendar className="w-4 h-4" />
-        </button>
-        {/* Hidden native picker — provides the calendar UI without the clunky box. */}
-        <input
-          ref={pickerRef}
-          type="date"
-          value={value || ""}
-          onChange={(e) => onChange(e.target.value)}
-          tabIndex={-1}
-          aria-hidden="true"
-          className="absolute right-2 bottom-0 h-0 w-0 opacity-0 pointer-events-none"
-        />
-      </div>
-      {invalid ? (
-        <p className="text-xs text-red-600 mt-1">
-          Unrecognized date — try 15 Mar 2024, 03/15/2024, or 2024-03-15.
-        </p>
-      ) : hint ? (
-        <p className="text-xs text-slate-500 mt-1">{hint}</p>
-      ) : null}
+      <input
+        id={inputId}
+        type="text"
+        inputMode="text"
+        autoComplete="off"
+        spellCheck={false}
+        value={text}
+        placeholder={placeholder ?? "DD-MMM-YYYY"}
+        onChange={(e) => setText(e.target.value)}
+        onBlur={(e) => commit(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") commit((e.target as HTMLInputElement).value);
+        }}
+        aria-invalid={shownError ? true : undefined}
+        aria-describedby={msgId}
+        className={cn(controlClasses, "num uppercase placeholder:normal-case")}
+      />
+      <FieldMessage id={msgId} error={shownError} hint={hint ?? "DD-MMM-YYYY"} />
     </div>
   );
 }

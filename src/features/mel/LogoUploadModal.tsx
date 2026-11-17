@@ -60,17 +60,17 @@ export function LogoUploadModal({
     <Modal
       open={open}
       onClose={onClose}
-      title="Unit Logo"
-      description="Upload a custom unit logo for MEL document branding."
+      title="Unit logo"
+      description="Optional. A custom unit logo printed on the MEL PDF."
       size="md"
       footer={
         <>
           {currentLogoUrl && onRemove ? (
-            <Button variant="danger" onClick={remove} loading={busy} leftIcon={<Trash2 className="h-4 w-4" />}>
-              Remove Logo
+            <Button variant="danger" onClick={remove} loading={busy} leftIcon={<Trash2 />} className="mr-auto">
+              Remove logo
             </Button>
           ) : null}
-          <Button variant="outline" onClick={onClose} disabled={busy}>
+          <Button variant="tertiary" onClick={onClose} disabled={busy}>
             Cancel
           </Button>
           <Button variant="primary" onClick={submit} loading={busy} disabled={!file}>
@@ -83,10 +83,12 @@ export function LogoUploadModal({
         ref={fileInput}
         type="file"
         accept="image/*"
-        className="hidden"
+        className="vh"
+        tabIndex={-1}
+        aria-label="Logo image file"
         onChange={onChange}
       />
-      <div className="border-2 border-dashed border-slate-300 rounded-lg p-6 text-center">
+      <div className="rounded-2 border border-ctrl bg-ground p-6 text-center">
         {preview ? (
           <img
             src={preview}
@@ -94,17 +96,17 @@ export function LogoUploadModal({
             className="mx-auto max-h-40 object-contain"
           />
         ) : (
-          <div className="space-y-2 text-slate-500">
-            <ImageIcon className="h-10 w-10 mx-auto" />
-            <p className="text-sm">No logo uploaded</p>
+          <div className="space-y-2 text-ink-3">
+            <ImageIcon className="mx-auto h-8 w-8" aria-hidden="true" />
+            <p className="text-sm">No logo selected</p>
           </div>
         )}
         <Button
-          variant="outline"
+          variant="secondary"
           size="sm"
           className="mt-4"
           onClick={() => fileInput.current?.click()}
-          leftIcon={<Upload className="h-4 w-4" />}
+          leftIcon={<Upload />}
         >
           {preview ? "Choose different image" : "Select image"}
         </Button>

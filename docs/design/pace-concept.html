@@ -1,0 +1,1080 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PACE MEL Concept</title>
+<meta name="description" content="Design concept for the PACE Initial/Final MEL workflow, using the Hollow Root and MTL Services design language.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Instrument+Sans:wght@400;500;600&family=Newsreader:opsz,wght@6..72,400;6..72,600&display=swap" rel="stylesheet">
+<style>
+/* =====================================================================
+   PACE tokens. Neutrals + harbor from MTL Services (platform/src/app/globals.css);
+   status tints, control border and contrast discipline from Hollow Root
+   (platform/src/app/globals.css). Contrast measured WCAG 2.x, see section 1.
+   ===================================================================== */
+:root, [data-theme="light"] {
+  color-scheme: light;
+  --paper: #F4F1EA;
+  --surface: #FFFFFF;
+  --surface-2: #EAE5DA;
+  --line: #D8D2C6;
+  --line-strong: #B9B1A2;
+  --ctrl: #8B7B6E;
+  --ink: #14181C;
+  --ink-2: #3A4046;
+  --ink-3: #5F656C;
+  --harbor: #0E2A35;
+  --harbor-2: #173E4D;
+  --on-harbor: #F4F1EA;
+  --focus: #1F6F8B;
+  --elig: #2F6B4F;      --elig-tint: #E1E7DC;
+  --inel: #A8362E;      --inel-tint: #F1E3E1;
+  --disc: #B8862B;      --disc-ink: #7E5B1C;   --disc-tint: #F4EAD2;
+  --btz: #1F6F8B;       --btz-ink: #175A72;    --btz-tint: #DCEAF0;
+  --small: #8B7B6E;     --small-ink: #5E5148;  --small-tint: #EAE5DA;
+  --error: #A8362E;
+  --scrim: rgb(11 20 24 / 0.52);
+  --shadow-1: 0 1px 2px rgb(20 24 28 / 0.06), 0 8px 24px rgb(20 24 28 / 0.10);
+  --r-1: 4px;
+  --r-2: 8px;
+  --d-1: 120ms;
+  --ease-out: cubic-bezier(0.2, 0, 0, 1);
+  --font-display: "Newsreader", "Iowan Old Style", Georgia, serif;
+  --font-sans: "Instrument Sans", ui-sans-serif, system-ui, "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, Consolas, "Courier New", monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --paper: #0B1418; --surface: #122028; --surface-2: #1A2C36;
+    --line: #243944; --line-strong: #345261; --ctrl: #6B8494;
+    --ink: #ECE7DD; --ink-2: #C9C3B8; --ink-3: #98A098;
+    --harbor: #ECE7DD; --harbor-2: #D8D2C6; --on-harbor: #0B1418;
+    --focus: #6FB3CC;
+    --elig: #5FA37F; --elig-tint: #1C3027;
+    --inel: #E27D73; --inel-tint: #3A2422;
+    --disc: #D3A24A; --disc-ink: #D3A24A; --disc-tint: #3A2C0C;
+    --btz: #6FB3CC; --btz-ink: #6FB3CC; --btz-tint: #13303B;
+    --small: #C8BCB0; --small-ink: #C8BCB0; --small-tint: #1A2C36;
+    --error: #E27D73;
+    --scrim: rgb(0 0 0 / 0.6);
+    --shadow-1: 0 1px 2px rgb(0 0 0 / 0.3), 0 8px 24px rgb(0 0 0 / 0.35);
+  }
+}
+[data-theme="dark"] {
+  color-scheme: dark;
+  --paper: #0B1418; --surface: #122028; --surface-2: #1A2C36;
+  --line: #243944; --line-strong: #345261; --ctrl: #6B8494;
+  --ink: #ECE7DD; --ink-2: #C9C3B8; --ink-3: #98A098;
+  --harbor: #ECE7DD; --harbor-2: #D8D2C6; --on-harbor: #0B1418;
+  --focus: #6FB3CC;
+  --elig: #5FA37F; --elig-tint: #1C3027;
+  --inel: #E27D73; --inel-tint: #3A2422;
+  --disc: #D3A24A; --disc-ink: #D3A24A; --disc-tint: #3A2C0C;
+  --btz: #6FB3CC; --btz-ink: #6FB3CC; --btz-tint: #13303B;
+  --small: #C8BCB0; --small-ink: #C8BCB0; --small-tint: #1A2C36;
+  --error: #E27D73;
+  --scrim: rgb(0 0 0 / 0.6);
+  --shadow-1: 0 1px 2px rgb(0 0 0 / 0.3), 0 8px 24px rgb(0 0 0 / 0.35);
+}
+
+/* ---------- base ---------- */
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; text-rendering: optimizeLegibility; }
+body {
+  margin: 0; background: var(--paper); color: var(--ink-2);
+  font-family: var(--font-sans); font-size: 15px; line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+h1, h2, h3, h4 { color: var(--ink); margin: 0; text-wrap: balance; }
+p { margin: 0; text-wrap: pretty; }
+a { color: inherit; text-underline-offset: 4px; text-decoration-thickness: 1px; }
+button, input, select, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+::selection { background: color-mix(in srgb, var(--focus) 22%, transparent); }
+.num { font-variant-numeric: tabular-nums lining-nums; }
+.code { font-family: var(--font-mono); font-size: 13px; letter-spacing: 0; }
+.muted { color: var(--ink-3); }
+.vh { position: absolute !important; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+svg.i { width: 16px; height: 16px; flex: none; stroke: currentColor; fill: none; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+@media (prefers-reduced-motion: reduce) { * { transition-duration: 0.01ms !important; } }
+
+/* ---------- concept document chrome ---------- */
+.doc { max-width: 1280px; margin: 0 auto; padding: 0 24px 96px; }
+.doc-head { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 16px; padding: 40px 0 24px; border-bottom: 1px solid var(--line); }
+.doc-head h1 { font-family: var(--font-display); font-weight: 400; font-size: 40px; line-height: 1.05; letter-spacing: -0.01em; }
+.doc-head .sub { margin-top: 8px; color: var(--ink-3); max-width: 70ch; }
+.doc-nav { display: flex; flex-wrap: wrap; gap: 4px 16px; font-size: 14px; }
+.doc-nav a { text-decoration: underline; text-decoration-color: var(--line-strong); }
+.doc-nav a:hover { text-decoration-color: currentColor; color: var(--ink); }
+.eyebrow { display: inline-flex; align-items: center; gap: 10px; font-size: 12px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-2); line-height: 1; }
+.eyebrow::before { content: ""; width: 20px; height: 2px; background: var(--disc); flex: none; }
+.sec { padding-top: 56px; }
+.sec > h2 { font-family: var(--font-display); font-weight: 400; font-size: 32px; line-height: 1.1; margin-top: 12px; }
+.sec > .lede { margin-top: 10px; max-width: 72ch; color: var(--ink-2); }
+.sub-h { font-size: 13px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-2); margin: 32px 0 12px; }
+.themebtn { height: 32px; padding: 0 12px; border: 1px solid var(--ctrl); background: var(--surface); border-radius: var(--r-1); font-size: 13px; cursor: pointer; }
+.themebtn:hover { border-color: var(--ink); }
+
+.sources { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 24px; }
+.src { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-2); padding: 20px 24px; }
+.src h3 { font-family: var(--font-display); font-weight: 400; font-size: 24px; }
+.src .where { font-size: 13px; color: var(--ink-3); margin-top: 2px; }
+.src ul { list-style: none; margin: 14px 0 0; padding: 0; display: grid; gap: 8px; font-size: 14px; }
+.src li { display: grid; grid-template-columns: 18px 1fr; gap: 10px; align-items: start; }
+.chip { width: 18px; height: 18px; border-radius: 3px; border: 1px solid rgb(0 0 0 / 0.12); margin-top: 2px; }
+.src .took { font-weight: 600; color: var(--ink); }
+.src .left-out { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line); font-size: 13px; color: var(--ink-3); }
+
+.swatches { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+.sw { border: 1px solid var(--line); border-radius: var(--r-2); background: var(--surface); overflow: hidden; font-size: 13px; }
+.sw .blk { height: 52px; border-bottom: 1px solid var(--line); display: flex; align-items: end; padding: 6px 8px; font-size: 12px; font-weight: 600; }
+.sw .meta { padding: 8px 10px 10px; display: grid; gap: 2px; }
+.sw .nm { font-weight: 600; color: var(--ink); }
+.sw .cr { color: var(--ink-3); font-size: 12px; }
+
+.type-spec { border: 1px solid var(--line); border-radius: var(--r-2); background: var(--surface); }
+.type-spec .row { display: grid; grid-template-columns: 200px 1fr; gap: 16px; align-items: baseline; padding: 12px 16px; border-bottom: 1px solid var(--line); }
+.type-spec .row:last-child { border-bottom: 0; }
+.type-spec .lbl { font-size: 12px; color: var(--ink-3); }
+
+.rules { display: grid; grid-template-columns: 1fr 1fr; gap: 0 32px; margin: 0; padding: 0; list-style: none; font-size: 14px; }
+.rules li { padding: 10px 0; border-bottom: 1px solid var(--line); display: grid; grid-template-columns: 110px 1fr; gap: 12px; }
+.rules b { color: var(--ink); font-weight: 600; }
+.vs { width: 100%; border-collapse: collapse; font-size: 14px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-2); overflow: hidden; }
+.vs th { text-align: left; background: var(--surface-2); font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 600; color: var(--ink-2); padding: 10px 14px; }
+.vs td { padding: 10px 14px; border-top: 1px solid var(--line); vertical-align: top; }
+.vs td:first-child { color: var(--ink); font-weight: 500; white-space: nowrap; }
+
+/* annotations */
+.anno { display: inline-flex; align-items: center; justify-content: center; min-width: 20px; height: 20px; padding: 0 4px; border-radius: 3px; border: 1.5px solid var(--disc); background: var(--disc-tint); color: var(--disc-ink); font-size: 11px; font-weight: 600; line-height: 1; vertical-align: middle; }
+.notes { margin: 16px 0 0; padding: 0; list-style: none; display: grid; grid-template-columns: 1fr 1fr; gap: 10px 32px; font-size: 14px; }
+.notes li { display: grid; grid-template-columns: 24px 1fr; gap: 10px; }
+.screen-h { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; margin: 48px 0 14px; }
+.screen-h h3 { font-family: var(--font-display); font-weight: 400; font-size: 26px; }
+.screen-h p { color: var(--ink-3); font-size: 14px; }
+
+/* ---------- mock browser frame ---------- */
+.frame { border: 1px solid var(--line-strong); border-radius: var(--r-2); overflow: clip; background: var(--paper); position: relative; }
+.frame-bar { height: 34px; display: flex; align-items: center; gap: 10px; padding: 0 12px; background: var(--surface-2); border-bottom: 1px solid var(--line); font-size: 12px; color: var(--ink-3); }
+.frame-bar .url { flex: 1; max-width: 420px; height: 22px; display: flex; align-items: center; padding: 0 10px; background: var(--surface); border: 1px solid var(--line); border-radius: 3px; font-family: var(--font-mono); font-size: 12px; overflow: hidden; white-space: nowrap; }
+
+/* ---------- PACE app shell ---------- */
+.cui { height: 26px; display: flex; align-items: center; justify-content: center; gap: 12px; background: var(--surface-2); border-bottom: 1px solid var(--line); font-size: 12px; color: var(--ink-2); }
+.cui b { letter-spacing: 0.16em; color: var(--ink); }
+.topbar { height: 56px; display: flex; align-items: center; gap: 28px; padding: 0 24px; background: var(--surface); border-bottom: 1px solid var(--line); }
+.brand { display: flex; align-items: baseline; gap: 10px; text-decoration: none; color: var(--ink); }
+.brand .wm { font-family: var(--font-display); font-size: 24px; font-weight: 600; letter-spacing: 0.06em; line-height: 1; }
+.brand .tl { font-size: 12px; color: var(--ink-3); letter-spacing: 0.04em; }
+.topnav { display: flex; gap: 4px; font-size: 14px; }
+.topnav a { position: relative; height: 56px; display: inline-flex; align-items: center; padding: 0 10px; text-decoration: none; color: var(--ink-3); }
+.topnav a:hover { color: var(--ink); }
+.topnav a[aria-current="page"] { color: var(--ink); font-weight: 500; }
+.topnav a[aria-current="page"]::after { content: ""; position: absolute; left: 10px; right: 10px; bottom: -1px; height: 2px; background: var(--harbor); }
+.topbar .right { margin-left: auto; display: flex; align-items: center; gap: 16px; font-size: 14px; }
+
+.app-body { display: grid; grid-template-columns: 208px minmax(0, 1fr); min-height: 640px; }
+.rail { background: var(--surface); border-right: 1px solid var(--line); padding: 20px 14px 24px; display: flex; flex-direction: column; gap: 20px; }
+.rail .doc-kind { padding: 0 8px; }
+.rail .doc-kind .k { font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-3); }
+.rail .doc-kind .v { margin-top: 4px; font-weight: 600; color: var(--ink); font-size: 15px; line-height: 1.3; }
+.steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; counter-reset: s; }
+.steps li a { position: relative; display: grid; grid-template-columns: 24px 1fr; gap: 10px; padding: 9px 8px; border-radius: var(--r-1); text-decoration: none; color: var(--ink-2); }
+.steps li a:hover { background: var(--paper); }
+.steps .mk { width: 24px; height: 24px; border-radius: var(--r-1); border: 1px solid var(--ctrl); display: grid; place-items: center; font-size: 12px; font-weight: 600; color: var(--ink-3); background: var(--surface); }
+.steps .lb { font-size: 14px; font-weight: 500; line-height: 1.3; }
+.steps .st { display: block; font-size: 12px; color: var(--ink-3); margin-top: 2px; font-weight: 400; }
+.steps .done .mk { border-color: var(--elig); color: var(--elig); background: var(--elig-tint); }
+.steps .cur a { background: var(--paper); color: var(--ink); }
+.steps .cur a::before { content: ""; position: absolute; left: -14px; top: 8px; bottom: 8px; width: 3px; background: var(--harbor); border-radius: 0 2px 2px 0; }
+.steps .cur .mk { background: var(--harbor); border-color: var(--harbor); color: var(--on-harbor); }
+.steps .todo a { color: var(--ink-3); }
+.steps .warn-t { color: var(--disc-ink); }
+.session { margin: 0; padding: 14px 8px 0; border-top: 1px solid var(--line); display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; font-size: 13px; }
+.session dt { color: var(--ink-3); }
+.session dd { margin: 0; min-width: 0; color: var(--ink); text-align: right; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rail .startover { padding: 0 8px; font-size: 13px; color: var(--ink-3); }
+
+.main { min-width: 0; padding: 24px 24px 0; display: flex; flex-direction: column; }
+.ph { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 16px; padding-bottom: 18px; border-bottom: 1px solid var(--line); }
+.ph .meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; font-size: 13px; color: var(--ink-3); margin-bottom: 8px; }
+.ph .meta .sep { width: 3px; height: 3px; background: var(--line-strong); border-radius: 50%; }
+.ph h2 { font-family: var(--font-display); font-weight: 400; font-size: 30px; line-height: 1.1; letter-spacing: -0.005em; }
+.ph .desc { margin-top: 6px; color: var(--ink-3); max-width: 64ch; font-size: 14px; }
+.ph .acts { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.actionbar { position: sticky; bottom: 0; z-index: 2; margin: 24px -24px 0; padding: 12px 24px; background: var(--surface); border-top: 1px solid var(--line); display: flex; flex-wrap: wrap; align-items: center; gap: 12px 16px; }
+.actionbar .status { flex: 1; min-width: 200px; font-size: 14px; color: var(--ink-2); display: flex; align-items: center; gap: 8px; }
+.actionbar .status .d { width: 8px; height: 8px; border-radius: 50%; background: var(--disc); flex: none; }
+
+/* ---------- controls ---------- */
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 40px; padding: 0 16px; border-radius: var(--r-1); border: 1px solid transparent; font-size: 15px; font-weight: 500; line-height: 1; white-space: nowrap; cursor: pointer; text-decoration: none; transition: background-color var(--d-1) var(--ease-out), color var(--d-1) var(--ease-out), border-color var(--d-1) var(--ease-out); background: transparent; }
+.btn-primary { background: var(--harbor); color: var(--on-harbor); }
+.btn-primary:hover { background: var(--harbor-2); }
+.btn-secondary { border-color: var(--ink); color: var(--ink); }
+.btn-secondary:hover { background: var(--ink); color: var(--paper); }
+.btn-tertiary { padding: 0 4px; color: var(--ink); text-decoration: underline; text-decoration-color: var(--line-strong); }
+.btn-tertiary:hover { text-decoration-color: currentColor; }
+.btn-danger { border-color: var(--inel); color: var(--inel); }
+.btn-sm { height: 32px; padding: 0 12px; font-size: 13px; }
+.btn[aria-disabled="true"] { opacity: 0.5; cursor: not-allowed; }
+kbd { font-family: var(--font-mono); font-size: 11px; line-height: 1; padding: 3px 5px; border: 1px solid var(--line-strong); border-bottom-width: 2px; border-radius: 3px; background: var(--surface); color: var(--ink-2); }
+
+.field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.field > label, .field > .label { font-size: 14px; font-weight: 500; color: var(--ink); }
+.field .req { color: var(--ink-3); font-weight: 400; font-size: 13px; }
+.field .opt { color: var(--ink-3); font-weight: 400; font-size: 13px; margin-left: 4px; }
+.ctl { width: 100%; height: 40px; padding: 0 12px; background: var(--surface); border: 1px solid var(--ctrl); border-radius: var(--r-1); color: var(--ink); font-size: 15px; transition: border-color var(--d-1) var(--ease-out); }
+.ctl::placeholder { color: var(--ink-3); opacity: 1; }
+.ctl:hover { border-color: var(--ink-2); }
+.ctl:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; border-color: var(--focus); }
+.ctl.mono { font-family: var(--font-mono); font-size: 14px; letter-spacing: 0.02em; }
+.ctl[aria-invalid="true"] { border-color: var(--error); box-shadow: inset 0 0 0 1px var(--error); }
+.sel { position: relative; }
+.sel select { appearance: none; -webkit-appearance: none; padding-right: 36px; cursor: pointer; }
+.sel svg { position: absolute; right: 12px; top: 50%; translate: 0 -50%; pointer-events: none; color: var(--ink-3); }
+.hint { font-size: 13px; color: var(--ink-3); }
+.err { font-size: 13px; color: var(--error); display: flex; gap: 6px; align-items: flex-start; }
+.err svg.i { width: 14px; height: 14px; margin-top: 2px; }
+.changed > label::after { content: "Edited"; margin-left: 8px; font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--btz-ink); }
+.msg { border: 1px solid var(--line); border-left: 3px solid var(--line-strong); border-radius: var(--r-1); background: var(--surface); padding: 12px 14px; font-size: 14px; }
+.msg.error { border-left-color: var(--error); }
+.msg.info { border-left-color: var(--btz); }
+.msg.warn { border-left-color: var(--disc); }
+.msg b { color: var(--ink); }
+.msg a { color: var(--ink); }
+
+/* status tag (only pill shape) + square badge */
+.tag { display: inline-flex; align-items: center; gap: 7px; height: 22px; padding: 0 9px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); font-size: 12px; font-weight: 500; color: var(--ink-2); white-space: nowrap; }
+.tag::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--dot, var(--ink-3)); flex: none; }
+.t-elig { --dot: var(--elig); } .t-inel { --dot: var(--inel); } .t-disc { --dot: var(--disc); } .t-btz { --dot: var(--btz); } .t-small { --dot: var(--small); }
+.badge { display: inline-flex; align-items: center; height: 20px; padding: 0 6px; border-radius: 3px; border: 1px solid var(--harbor); color: var(--harbor); font-size: 10.5px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; white-space: nowrap; }
+
+/* ---------- Review screen ---------- */
+.attn { margin-top: 18px; display: grid; grid-template-columns: auto 1fr; gap: 4px 16px; padding: 12px 16px; background: var(--surface); border: 1px solid var(--line); border-left: 3px solid var(--disc); border-radius: var(--r-1); }
+.attn .ttl { font-weight: 600; color: var(--ink); font-size: 14px; grid-row: span 2; padding-top: 1px; white-space: nowrap; }
+.attn ul { margin: 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: 4px 22px; font-size: 14px; }
+.attn li { display: block; }
+.attn li::before { content: ""; display: inline-block; width: 8px; height: 8px; margin-right: 8px; border-radius: 50%; background: var(--dot); vertical-align: 1px; }
+.attn a { color: var(--ink); }
+.attn .stale { font-size: 13px; color: var(--disc-ink); display: flex; align-items: center; gap: 8px; }
+
+.cats { display: flex; gap: 2px; margin-top: 18px; border-bottom: 1px solid var(--line); overflow-x: auto; scrollbar-width: thin; }
+.cats [role="tab"] { position: relative; display: inline-flex; align-items: center; gap: 8px; height: 44px; padding: 0 12px; border: 0; background: none; font-size: 14px; color: var(--ink-3); cursor: pointer; white-space: nowrap; }
+.cats [role="tab"]:hover { color: var(--ink); }
+.cats [role="tab"] .d { width: 8px; height: 8px; border-radius: 50%; background: var(--dot, transparent); }
+.cats [role="tab"] .n { font-size: 13px; color: var(--ink-3); font-variant-numeric: tabular-nums; }
+.cats [role="tab"] .flag { font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--disc-ink); }
+.cats [role="tab"][aria-selected="true"] { color: var(--ink); font-weight: 500; }
+.cats [role="tab"][aria-selected="true"] .n { color: var(--ink); }
+.cats [role="tab"][aria-selected="true"]::after { content: ""; position: absolute; left: 12px; right: 12px; bottom: -1px; height: 2px; background: var(--harbor); }
+
+.toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 14px 0; }
+.search { position: relative; width: 300px; max-width: 100%; }
+.search svg.i { position: absolute; left: 12px; top: 50%; translate: 0 -50%; color: var(--ink-3); }
+.search .ctl { padding-left: 36px; padding-right: 36px; height: 36px; font-size: 14px; }
+.search kbd { position: absolute; right: 9px; top: 50%; translate: 0 -50%; }
+.toolbar .sel .ctl { height: 36px; font-size: 14px; width: auto; min-width: 190px; }
+.chk { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer; color: var(--ink-2); }
+.chk input { width: 16px; height: 16px; accent-color: var(--harbor); margin: 0; }
+.toolbar .end { margin-left: auto; display: flex; gap: 8px; }
+
+.tw { position: relative; width: 100%; overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-2); }
+table.roster { width: 100%; border-collapse: collapse; font-size: 14px; }
+.roster caption { text-align: left; }
+.roster th { position: sticky; top: 0; background: var(--surface-2); text-align: left; font-size: 11.5px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-2); padding: 9px 10px; white-space: nowrap; border-bottom: 1px solid var(--line); }
+.roster th .sort { display: inline-flex; align-items: center; gap: 4px; color: var(--ink); }
+.roster td { padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: middle; color: var(--ink-2); }
+.roster tbody tr:last-child td { border-bottom: 0; }
+.roster tbody tr.m:hover td { background: color-mix(in srgb, var(--paper) 70%, var(--surface)); }
+.roster tbody tr.m:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
+.roster .nm { font-weight: 500; color: var(--ink); white-space: nowrap; }
+.roster .nw { white-space: nowrap; }
+.roster .why { font-size: 13.5px; color: var(--ink-2); min-width: 190px; }
+.roster .why .rs { display: block; margin-top: 3px; color: var(--ink-2); }
+.roster .why .raw { display: block; font-family: var(--font-mono); font-size: 11.5px; color: var(--ink-3); margin-top: 1px; }
+.roster .why .raw.prose { font-family: var(--font-sans); font-size: 12.5px; }
+.roster .missing { color: var(--error); font-weight: 500; }
+.roster tr.override td:first-child { box-shadow: inset 3px 0 0 var(--harbor); }
+.roster .acts { display: flex; justify-content: flex-end; gap: 2px; white-space: nowrap; }
+.act { display: inline-flex; align-items: center; gap: 5px; height: 28px; padding: 0 7px; border: 1px solid transparent; border-radius: var(--r-1); background: none; font-size: 13px; font-weight: 500; color: var(--ink-2); cursor: pointer; }
+.act:hover { border-color: var(--line-strong); color: var(--ink); background: var(--surface); }
+.act.move { color: var(--elig); }
+.act.move:hover { border-color: var(--elig); }
+.act.del { color: var(--ink-3); padding: 0 6px; }
+.act.del:hover { color: var(--inel); border-color: var(--inel); }
+.act.fix { border-color: var(--line-strong); color: var(--ink); }
+.act[aria-expanded="true"] { border-color: var(--elig); background: var(--elig-tint); color: var(--elig); }
+tr.inline td { background: color-mix(in srgb, var(--elig-tint) 55%, var(--surface)); padding: 14px 16px 16px; }
+.inline-form { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px 12px; align-items: end; max-width: 860px; margin-left: auto; }
+.inline-form .field { grid-column: 1; }
+.inline-form .btns { display: flex; gap: 8px; }
+.inline-form .fine { grid-column: 1 / -1; font-size: 13px; color: var(--ink-3); }
+.tfoot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 2px 0; font-size: 13px; color: var(--ink-3); }
+.tfoot .pg { display: flex; gap: 6px; align-items: center; }
+.keys { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 12.5px; color: var(--ink-3); }
+.keys span { display: inline-flex; gap: 6px; align-items: center; }
+
+/* ---------- Upload screen ---------- */
+.up-grid { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); gap: 24px; margin-top: 22px; align-items: start; }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-2); }
+.panel-h { padding: 16px 20px; border-bottom: 1px solid var(--line); }
+.panel-h h3 { font-size: 16px; font-weight: 600; }
+.panel-h p { font-size: 13px; color: var(--ink-3); margin-top: 2px; }
+.panel-b { padding: 20px; display: grid; gap: 18px; }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.drop { border: 1px solid var(--ctrl); border-radius: var(--r-2); padding: 22px 20px; text-align: center; font-size: 14px; color: var(--ink-2);
+  background-color: var(--paper);
+  background-image: repeating-linear-gradient(0deg, rgb(20 24 28 / 0.035) 0 1px, transparent 1px 3px), repeating-linear-gradient(90deg, rgb(20 24 28 / 0.028) 0 1px, transparent 1px 4px); }
+.drop .big { font-weight: 600; color: var(--ink); font-size: 15px; }
+.drop .sm { font-size: 13px; color: var(--ink-3); margin-top: 4px; }
+.drop .btn { margin-top: 12px; }
+.file { display: grid; grid-template-columns: auto 1fr auto; gap: 12px; align-items: center; padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--r-1); font-size: 14px; }
+.file .fn { font-weight: 500; color: var(--ink); overflow-wrap: anywhere; }
+.file .fm { font-size: 12.5px; color: var(--ink-3); }
+.checks { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; font-size: 14px; }
+.checks li { display: flex; align-items: center; gap: 8px; }
+.checks .ok { color: var(--elig); }
+.cols { display: flex; flex-wrap: wrap; gap: 6px; }
+.cols span { font-family: var(--font-mono); font-size: 12px; padding: 3px 7px; border: 1px solid var(--line); border-radius: 3px; background: var(--paper); color: var(--ink-2); }
+details.pii { border-top: 1px solid var(--line); }
+details.pii summary { cursor: pointer; padding: 14px 20px; font-size: 14px; font-weight: 600; color: var(--ink); list-style: none; display: flex; align-items: center; gap: 10px; }
+details.pii summary::-webkit-details-marker { display: none; }
+details.pii summary .chev { transition: rotate var(--d-1); }
+details.pii[open] summary .chev { rotate: 90deg; }
+details.pii summary .n { margin-left: auto; font-weight: 400; color: var(--ink-3); font-size: 13px; }
+details.pii .body { padding: 0 20px 18px; display: grid; gap: 10px; }
+.cols.pii-cols span { border-color: color-mix(in srgb, var(--inel) 35%, var(--line)); background: var(--inel-tint); }
+.panel .sect { padding: 16px 20px; border-top: 1px solid var(--line); display: grid; gap: 10px; }
+.panel .sect:first-of-type { border-top: 0; }
+.panel .sect h4 { font-size: 14px; font-weight: 600; display: flex; justify-content: space-between; gap: 8px; }
+.panel .sect h4 span { font-weight: 400; color: var(--ink-3); font-size: 13px; }
+
+/* ---------- Force distributor ---------- */
+.fd-grid { display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: 24px; margin-top: 22px; align-items: start; }
+.units { list-style: none; margin: 0; padding: 0; border: 1px solid var(--line); border-radius: var(--r-2); background: var(--surface); overflow: hidden; }
+.units li + li { border-top: 1px solid var(--line); }
+.units a { display: grid; gap: 2px; padding: 12px 14px; text-decoration: none; position: relative; }
+.units a:hover { background: var(--paper); }
+.units a[aria-current="true"] { background: var(--paper); }
+.units a[aria-current="true"]::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--harbor); }
+.units .pc { font-family: var(--font-mono); font-size: 13.5px; font-weight: 500; color: var(--ink); }
+.units .un { font-size: 13px; color: var(--ink-2); }
+.units .us { font-size: 12.5px; display: flex; align-items: center; gap: 6px; margin-top: 4px; }
+.units .us::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--dot); }
+.us.ok { --dot: var(--elig); color: var(--elig); }
+.us.part { --dot: var(--disc); color: var(--disc-ink); }
+.us.none { --dot: var(--line-strong); color: var(--ink-3); }
+.units .grp { padding: 8px 14px; font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-3); background: var(--surface-2); }
+fieldset { margin: 0; padding: 0; border: 0; min-width: 0; }
+.fs { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-2); }
+.fs + .fs { margin-top: 16px; }
+.fs legend { float: left; width: 100%; padding: 14px 20px; border-bottom: 1px solid var(--line); font-size: 16px; font-weight: 600; color: var(--ink); display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+.fs legend .lhint { font-size: 13px; font-weight: 400; color: var(--ink-3); }
+.fs .body { clear: both; padding: 18px 20px 20px; display: grid; gap: 16px; }
+.g-3 { display: grid; grid-template-columns: 180px 1fr; gap: 16px; }
+.g-name { display: grid; grid-template-columns: 1fr 92px 1fr; gap: 16px; }
+.g-name label { white-space: nowrap; }
+.prints { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: baseline; padding: 10px 12px; border-radius: var(--r-1); background: var(--paper); border: 1px dashed var(--line-strong); font-size: 13px; }
+.prints .k { color: var(--ink-3); font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; font-weight: 600; }
+.prints .v { font-family: var(--font-mono); font-size: 13px; color: var(--ink); }
+.prints .v.gap { color: var(--error); }
+
+/* ---------- Dialog ---------- */
+.dlg-stage { position: relative; }
+.dlg-stage .ghost { filter: saturate(0.6); }
+.dlg-stage .scrimlayer { position: absolute; inset: 0; background: var(--scrim); display: flex; align-items: flex-start; justify-content: center; padding: 48px 16px; }
+.dialog { width: min(720px, 100%); background: var(--surface); border-radius: var(--r-2); box-shadow: var(--shadow-1); border: 1px solid var(--line); display: flex; flex-direction: column; max-height: calc(100% - 0px); }
+.dialog header { display: flex; align-items: start; justify-content: space-between; gap: 16px; padding: 18px 22px 14px; border-bottom: 1px solid var(--line); }
+.dialog header h3 { font-family: var(--font-display); font-weight: 400; font-size: 26px; line-height: 1.1; }
+.dialog header .who { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 6px; font-size: 13px; color: var(--ink-3); }
+.xbtn { width: 32px; height: 32px; display: grid; place-items: center; border: 1px solid transparent; border-radius: var(--r-1); background: none; cursor: pointer; color: var(--ink-2); }
+.xbtn:hover { border-color: var(--line-strong); }
+.dialog .dbody { padding: 18px 22px; display: grid; gap: 4px; overflow: auto; }
+.dsec { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 16px; padding: 14px 0; border-top: 1px solid var(--line); }
+.dsec:first-of-type { border-top: 0; }
+.dsec h4 { font-size: 13px; font-weight: 600; color: var(--ink); padding-top: 2px; }
+.dsec h4 small { display: block; font-weight: 400; color: var(--ink-3); font-size: 12.5px; margin-top: 2px; }
+.dsec .flds { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 16px; }
+.dsec .span2 { grid-column: 1 / -1; }
+.dialog footer { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 14px 22px; border-top: 1px solid var(--line); }
+.dialog footer .note { flex: 1; font-size: 13px; color: var(--ink-3); min-width: 180px; }
+
+/* ---------- responsive ---------- */
+@media (max-width: 1100px) {
+  .notes { grid-template-columns: 1fr; }
+  .rules { grid-template-columns: 1fr; }
+}
+@media (max-width: 900px) {
+  .sources { grid-template-columns: 1fr; }
+  .app-body { grid-template-columns: 1fr; min-height: 0; }
+  .rail { border-right: 0; border-bottom: 1px solid var(--line); padding: 10px 12px; gap: 8px; }
+  .rail .doc-kind, .rail .session, .rail .startover { display: none; }
+  .steps { grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 4px; }
+  .steps li a { grid-template-columns: 1fr; justify-items: start; gap: 6px; padding: 6px; }
+  .steps .lb { font-size: 12.5px; }
+  .steps .st { display: none; }
+  .steps .cur a::before { left: 6px; right: 6px; top: auto; bottom: -11px; width: auto; height: 3px; border-radius: 2px 2px 0 0; }
+  .main { padding: 18px 16px 0; }
+  .actionbar { margin: 20px -16px 0; padding: 12px 16px; }
+  .up-grid, .fd-grid { grid-template-columns: 1fr; }
+  .topnav { display: none; }
+  .type-spec .row { grid-template-columns: 1fr; gap: 4px; }
+  .dsec { grid-template-columns: 1fr; gap: 10px; }
+}
+@media (max-width: 600px) {
+  .vs td:first-child { white-space: normal; }
+  .vs .code { overflow-wrap: anywhere; }
+  .doc { padding: 0 16px 64px; }
+  .doc-head h1 { font-size: 30px; }
+  .sec > h2 { font-size: 26px; }
+  .two, .dsec .flds, .g-3 { grid-template-columns: 1fr; }
+  .g-name { grid-template-columns: 1fr 64px; }
+  .g-name > :last-child { grid-column: 1 / -1; }
+  .cui span.more { display: none; }
+  .topbar { padding: 0 16px; }
+  .topbar .right .hide-sm { display: none; }
+  .ph h2 { font-size: 25px; }
+  .attn { grid-template-columns: 1fr; }
+  .attn .ttl { grid-row: auto; }
+  .search { width: 100%; }
+  .toolbar .sel, .toolbar .sel .ctl { width: 100%; }
+  .toolbar .end { margin-left: 0; width: 100%; }
+  .toolbar .end .btn { flex: 1; }
+  .inline-form { grid-template-columns: 1fr; }
+  .inline-form .btns { grid-column: 1; }
+  .actionbar .btn-primary { width: 100%; }
+  .rules li { grid-template-columns: 1fr; gap: 2px; }
+  .dlg-stage .scrimlayer { padding: 16px 8px; }
+  .dialog header, .dialog .dbody, .dialog footer { padding-left: 16px; padding-right: 16px; }
+}
+</style>
+</head>
+<body>
+
+<!-- icon sprite -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-check" viewBox="0 0 16 16"><path d="M3.5 8.5l3 3 6-7"/></symbol>
+  <symbol id="i-chev-d" viewBox="0 0 16 16"><path d="M4 6l4 4 4-4"/></symbol>
+  <symbol id="i-chev-r" viewBox="0 0 16 16"><path d="M6 4l4 4-4 4"/></symbol>
+  <symbol id="i-arrow-r" viewBox="0 0 16 16"><path d="M3 8h10M9 4l4 4-4 4"/></symbol>
+  <symbol id="i-arrow-l" viewBox="0 0 16 16"><path d="M13 8H3M7 4L3 8l4 4"/></symbol>
+  <symbol id="i-arrow-up" viewBox="0 0 16 16"><path d="M8 13V3M4 7l4-4 4 4"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 16 16"><path d="M8 3v10M3 8h10"/></symbol>
+  <symbol id="i-pencil" viewBox="0 0 16 16"><path d="M10.5 3l2.5 2.5L6 12.5 3 13l.5-3z"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 16 16"><path d="M3 4.5h10M6.5 4.5V3h3v1.5M4.5 4.5l.6 8.5h5.8l.6-8.5"/></symbol>
+  <symbol id="i-refresh" viewBox="0 0 16 16"><path d="M13 8a5 5 0 1 1-1.5-3.6M13 2.5v2.5h-2.5"/></symbol>
+  <symbol id="i-search" viewBox="0 0 16 16"><circle cx="7" cy="7" r="4.25"/><path d="M10.2 10.2L13.5 13.5"/></symbol>
+  <symbol id="i-file" viewBox="0 0 16 16"><path d="M4 1.75h5L12.25 5v9.25H4zM9 1.75V5h3.25M6 8.5h4M6 11h4"/></symbol>
+  <symbol id="i-x" viewBox="0 0 16 16"><path d="M4 4l8 8M12 4l-8 8"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6"/><path d="M8 5v3.5M8 10.75v.25"/></symbol>
+  <symbol id="i-move" viewBox="0 0 16 16"><path d="M2.5 8h8M7.5 5l3 3-3 3M13.5 3v10"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 16 16"><path d="M5.5 5.5h7v7h-7zM3.5 10.5v-7h7"/></symbol>
+  <symbol id="i-download" viewBox="0 0 16 16"><path d="M8 2.5v8M4.5 7L8 10.5 11.5 7M3 13.5h10"/></symbol>
+</svg>
+
+<div class="doc">
+
+<header class="doc-head">
+  <div>
+    <span class="eyebrow">Design concept &middot; 17-NOV-2026</span>
+    <h1 style="margin-top:12px">PACE &mdash; MEL workflow redesign</h1>
+    <p class="sub">The upload, review, force distributor and edit screens of the Initial / Final MEL tool, restyled in the language of Hollow Root and MTL Services. Static mockups, fake data only. The category tabs, search and the <kbd>/</kbd> key work in the Review mockup.</p>
+  </div>
+  <div style="display:grid; gap:12px; justify-items:end">
+    <button class="themebtn" type="button" id="themeBtn" aria-live="polite">Theme: Auto</button>
+    <nav class="doc-nav" aria-label="Concept sections">
+      <a href="#direction">Direction</a><a href="#upload">Upload</a><a href="#review">Review</a><a href="#fd">Force distributor</a><a href="#dialog">Edit dialog</a>
+    </nav>
+  </div>
+</header>
+
+<!-- ================================================================== -->
+<section class="sec" id="direction" aria-labelledby="dir-h">
+  <span class="eyebrow">1 &middot; Design direction</span>
+  <h2 id="dir-h">Paper, harbor and hairlines</h2>
+  <p class="lede">Both of Drew's sites already share one system: warm paper, near-black ink, 1px hairlines, 4px radius, one accent, a serif used only for titles, and a sans for everything you read or click. PACE takes that frame as-is and gives it an official tone. Harbor navy-teal replaces default Tailwind indigo, and five muted status colours replace the rainbow tiles. Every decision serves scanning a 400-row roster quickly.</p>
+
+  <div class="sources">
+    <article class="src">
+      <h3>From MTL Services</h3>
+      <p class="where">mtl-services/platform/src/app/globals.css &middot; components/ui/* &middot; shells/app/*</p>
+      <ul>
+        <li><span class="chip" style="background:#F4F1EA"></span><span><span class="took">Neutral scale, unchanged.</span> paper <span class="code">#F4F1EA</span>, surface <span class="code">#FFFFFF</span>, surface-2 <span class="code">#EAE5DA</span>, line <span class="code">#D8D2C6</span>, line-strong <span class="code">#B9B1A2</span>, ink <span class="code">#14181C</span> / <span class="code">#3A4046</span> / <span class="code">#5F656C</span>.</span></li>
+        <li><span class="chip" style="background:#0E2A35"></span><span><span class="took">Harbor <span class="code">#0E2A35</span> / <span class="code">#173E4D</span> becomes the PACE primary.</span> It reads as Air Force navy without the SaaS indigo. Focus ring <span class="code">#1F6F8B</span>.</span></li>
+        <li><span class="chip" style="background:#2F6B4F"></span><span><span class="took">Status hues:</span> palm <span class="code">#2F6B4F</span> &rarr; Eligible, brick <span class="code">#A8362E</span> &rarr; Ineligible, brass <span class="code">#B8862B</span> + brass-ink <span class="code">#7E5B1C</span> &rarr; Discrepancy.</span></li>
+        <li><span class="chip" style="background:var(--surface-2)"></span><span><span class="took">Type:</span> Newsreader 400 (titles only), Instrument Sans 400/500/600 (UI, 15px/1.5 app surface), tabular numerals. IBM Plex Mono comes from MTL's earlier <span class="code">web/app/layout.tsx</span> and is used only for codes (PAS, AFSC, SRID).</span></li>
+        <li><span class="chip" style="background:var(--surface)"></span><span><span class="took">Components:</span> Button (40px app, radius 4, hover changes colour only, one primary per view). Field (label above, 13px error below, aria-describedby). Table (TH on surface-2, 12px caps +0.08em, hairline rows). Tag (8px dot pill, the only round shape). Badge (square caps). Tabs (2px underline + count). 248px side-nav app shell.</span></li>
+      </ul>
+      <p class="left-out">Left out: clay <span class="code">#B65A32</span> as CTA. It is too warm and too close to brick for a status-heavy screen.</p>
+    </article>
+    <article class="src">
+      <h3>From Hollow Root</h3>
+      <p class="where">hollowroot/platform/src/app/globals.css &middot; components/ui/*</p>
+      <ul>
+        <li><span class="chip" style="background:#E1E7DC"></span><span><span class="took">Status tints:</span> sage-tint <span class="code">#E1E7DC</span> (Eligible ground), rose-tint <span class="code">#F1E3E1</span> (Ineligible / PII ground). Each carries text at 5:1 or better.</span></li>
+        <li><span class="chip" style="background:#8B7B6E"></span><span><span class="took">Stone <span class="code">#8B7B6E</span> as the input border</span> (HR's "line-strong &rarr; UI borders only", 3.6:1 on paper). MTL's input border <span class="code">#D8D2C6</span> is under 3:1, so PACE uses this one. Stone also marks Small Unit; stone-ink <span class="code">#5E5148</span> carries its text.</span></li>
+        <li><span class="chip" style="background:#F6F3EC"></span><span><span class="took">The admin-workspace rule:</span> HR's <span class="code">.admin-ui</span> drops the serif and keeps one brand accent. PACE does the same inside tables and forms and keeps the serif for page titles.</span></li>
+        <li><span class="chip" style="background:#EDE8DD"></span><span><span class="took">Linen weave</span> (the <span class="code">.linen</span> CSS texture) on the upload drop area: a quiet surface instead of a dashed box or an illustration.</span></li>
+        <li><span class="chip" style="background:var(--surface)"></span><span><span class="took">Discipline:</span> every colour pair carries a measured contrast note, fills that are never used as text, a <span class="code">prefers-reduced-motion</span> kill switch, and eyebrow caps for section labels.</span></li>
+      </ul>
+      <p class="left-out">Left out: Cormorant Garamond + Figtree (too soft for a USAF tool), dusty rose / gold foil as accents, the 48px "Book" CTA, scroll-reveal motion.</p>
+    </article>
+  </div>
+
+  <h3 class="sub-h">PACE palette &mdash; light (contrast vs paper / white)</h3>
+  <div class="swatches" role="list">
+    <div class="sw" role="listitem"><div class="blk" style="background:var(--paper)"></div><div class="meta"><span class="nm">paper</span><span class="code">#F4F1EA</span><span class="cr">page ground</span></div></div>
+    <div class="sw" role="listitem"><div class="blk" style="background:var(--surface)"></div><div class="meta"><span class="nm">surface</span><span class="code">#FFFFFF</span><span class="cr">panels, table</span></div></div>
+    <div class="sw" role="listitem"><div class="blk" style="background:var(--surface-2)"></div><div class="meta"><span class="nm">surface-2</span><span class="code">#EAE5DA</span><span class="cr">table head, CUI strip</span></div></div>
+    <div class="sw" role="listitem"><div class="blk" style="background:var(--line)"></div><div class="meta"><span class="nm">line</span><span class="code">#D8D2C6</span><span class="cr">hairlines (decorative)</span></div></div>
+    <div class="sw" role="listitem"><div class="blk" style="background:#8B7B6E"></div><div class="meta"><span class="nm">ctrl</span><span class="code">#8B7B6E</span><span class="cr">input border 3.6 / 4.1</span></div></div>
+    <div class="sw" role="listitem"><div class="blk" style="background:#14181C"></div><div class="meta"><span class="nm">ink</span><span class="code">#14181C</span><span class="cr">headings 15.8 / 17.8</span></div></div>
+    <div class="sw" role="listitem"><div class="blk" style="background:#3A4046"></div><div class="meta"><span class="nm">ink-2</span><span class="code">#3A4046</span><span class="cr">body 9.3 / 10.5</span></div></div>
+    <div class="sw" role="listitem"><div class="blk" style="background:#5F656C"></div><div class="meta"><span class="nm">ink-3</span><span class="code">#5F656C</span><span class="cr">meta 5.2 / 5.9</span></div></div>
+    <div class="sw" role="listitem"><div class="blk" style="background:#0E2A35;color:#F4F1EA">Continue</div><div class="meta"><span class="nm">harbor</span><span class="code">#0E2A35</span><span class="cr">primary &middot; paper on it 13.3</span></div></div>
+    <div class="sw" role="listitem"><div class="blk" style="background:#1F6F8B"></div><div class="meta"><span class="nm">focus</span><span class="code">#1F6F8B</span><span class="cr">focus ring 5.0</span></div></div>
+  </div>
+  <h3 class="sub-h">Category colours &mdash; a dot, a 3px edge or a tint; never a filled tile</h3>
+  <div class="swatches" role="list">
+    <div class="sw" role="listitem"><div class="blk" style="background:#E1E7DC;color:#2F6B4F">Eligible</div><div class="meta"><span class="nm">elig #2F6B4F</span><span class="cr">tint #E1E7DC &middot; text 5.0 on tint</span></div></div>
+    <div class="sw" role="listitem"><div class="blk" style="background:#F1E3E1;color:#A8362E">Ineligible</div><div class="meta"><span class="nm">inel #A8362E</span><span class="cr">tint #F1E3E1 &middot; 5.2 on tint</span></div></div>
+    <div class="sw" role="listitem"><div class="blk" style="background:#F4EAD2;color:#7E5B1C">Discrepancy</div><div class="meta"><span class="nm">disc #B8862B</span><span class="cr">ink #7E5B1C &middot; tint #F4EAD2 &middot; 5.2</span></div></div>
+    <div class="sw" role="listitem"><div class="blk" style="background:#DCEAF0;color:#175A72">BTZ</div><div class="meta"><span class="nm">btz #1F6F8B</span><span class="cr">ink #175A72 &middot; tint #DCEAF0 &middot; 6.2</span></div></div>
+    <div class="sw" role="listitem"><div class="blk" style="background:#EAE5DA;color:#5E5148">Small unit</div><div class="meta"><span class="nm">small #8B7B6E</span><span class="cr">ink #5E5148 &middot; 6.1 on tint</span></div></div>
+  </div>
+
+  <h3 class="sub-h">Type scale</h3>
+  <div class="type-spec">
+    <div class="row"><span class="lbl">Page title &middot; Newsreader 400 &middot; 30/33</span><span style="font-family:var(--font-display);font-size:30px;line-height:1.1;color:var(--ink)">Review the roster</span></div>
+    <div class="row"><span class="lbl">Dialog title &middot; Newsreader 400 &middot; 26/29</span><span style="font-family:var(--font-display);font-size:26px;line-height:1.1;color:var(--ink)">Edit member</span></div>
+    <div class="row"><span class="lbl">Panel heading &middot; Instrument Sans 600 &middot; 16</span><span style="font-weight:600;font-size:16px;color:var(--ink)">Senior rater</span></div>
+    <div class="row"><span class="lbl">Body / control &middot; Instrument Sans 400 &middot; 15/22</span><span style="font-size:15px">Enter the commander and senior rater for each unit.</span></div>
+    <div class="row"><span class="lbl">Table cell &middot; Instrument Sans 400 &middot; 14/20</span><span style="font-size:14px">TESTALPHA, ADAM B. &nbsp; SRA &nbsp; <span class="num">01-FEB-2023</span></span></div>
+    <div class="row"><span class="lbl">Codes &middot; IBM Plex Mono 400 &middot; 13</span><span class="code" style="color:var(--ink)">ZZ1TEST &nbsp; 3F051 &nbsp; 1234567</span></div>
+    <div class="row"><span class="lbl">Label caps &middot; Instrument Sans 600 &middot; 11.5 +0.08em</span><span style="font-size:11.5px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-2)">Status &amp; reason</span></div>
+  </div>
+
+  <h3 class="sub-h">Rules</h3>
+  <ul class="rules">
+    <li><b>Radius</b><span>4px controls and buttons, 8px panels / tables / dialog. 999px only on the status Tag.</span></li>
+    <li><b>Elevation</b><span>No shadows on cards. Hairline borders do the separation. The only shadow is the dialog (<span class="code">shadow-1</span>).</span></li>
+    <li><b>Accent</b><span>One primary (harbor) button per view, always the next step. Everything else is outline, underline, or a 28px row action.</span></li>
+    <li><b>Motion</b><span>Colour transitions only, 120ms. No pulsing, scaling, or staggered step animations.</span></li>
+    <li><b>Words</b><span>Plain-language reason first; the engine's raw code underneath in mono, for traceability.</span></li>
+    <li><b>Dates</b><span>Always <span class="code">DD-MMM-YYYY</span> (01-FEB-2023), typed into text fields. No native date pickers.</span></li>
+  </ul>
+
+  <h3 class="sub-h">What changes vs. the current build</h3>
+  <div style="overflow-x:auto"><table class="vs">
+    <thead><tr><th scope="col">Today (pace-frontend-test)</th><th scope="col">Concept</th></tr></thead>
+    <tbody>
+      <tr><td>Six stat tiles with round icon bubbles at 20% tint</td><td>One category tab row with counts, plus a "needs attention" line that links straight to the rows.</td></tr>
+      <tr><td>Pulsing, scaling round step circles across the top</td><td>A persistent left step rail with a status line per step ("3 to review"). On phones it becomes a 4-segment strip.</td></tr>
+      <tr><td>Indigo <span class="code">#1E3A8A</span>/<span class="code">#3B5BDB</span>, purple BTZ <span class="code">#7C3AED</span>, cyan, green Upload Logo button</td><td>Harbor + five muted status hues. A button's colour shows its importance, not its feature.</td></tr>
+      <tr><td>Inter + Poppins + Black Ops One</td><td>Instrument Sans + Newsreader (titles) + IBM Plex Mono (codes).</td></tr>
+      <tr><td>Icon-only Edit / Delete; no way to move a member</td><td>Labelled row actions, "Move to eligible" with an inline required reason, and an OVERRIDE badge plus a 3px harbor edge on moved rows.</td></tr>
+      <tr><td><span class="code">type="date"</span> pickers; reason shown as one grey line</td><td><span class="code">DD-MMM-YYYY</span> text fields with format hints. The reason is explained in words with the source code beneath.</td></tr>
+      <tr><td>Force distributor: tabs per PASCODE, no completion status</td><td>A unit list showing complete / missing / not started, a "prints as" preview, and copy-from-unit for shared senior raters.</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- ================================================================== -->
+<section class="sec" aria-labelledby="screens-h">
+  <span class="eyebrow">2 &middot; Screens</span>
+  <h2 id="screens-h">The MEL workflow, step by step</h2>
+  <p class="lede">The same shell is used at every step: CUI strip, top bar, step rail, page header, content, and a sticky action bar holding Back plus the one primary action. Numbered markers <span class="anno">1</span> point to the notes under each screen.</p>
+
+  <!-- ===================== A. UPLOAD ===================== -->
+  <div class="screen-h" id="upload"><h3>A &middot; Upload roster</h3><p>Ready-to-process state: cycle and year chosen, file attached, columns pre-checked.</p></div>
+  <div class="frame">
+    <div class="frame-bar"><span class="url">test.pacetool.app/initial-mel</span></div>
+    <div class="cui" role="note"><b>CUI</b><span class="more">Controlled Unclassified Information &middot; roster data is not stored</span></div>
+    <div class="topbar">
+      <a class="brand" href="#upload"><span class="wm">PACE</span><span class="tl">Promotion tool</span></a>
+      <nav class="topnav" aria-label="Tools"><a href="#upload" aria-current="page">Initial MEL</a><a href="#upload">Final MEL</a><a href="#upload">BTZ calculator</a><a href="#upload">Memo generator</a></nav>
+      <div class="right"><a href="#upload" class="hide-sm">How to use</a></div>
+    </div>
+    <div class="app-body">
+      <aside class="rail" aria-label="Progress">
+        <div class="doc-kind"><div class="k">Initial MEL</div><div class="v">New listing</div></div>
+        <ol class="steps">
+          <li class="cur"><a href="#upload" aria-current="step"><span class="mk">1</span><span class="lb">Upload roster<span class="st">Choose cycle and file</span></span></a></li>
+          <li class="todo"><a aria-disabled="true"><span class="mk">2</span><span class="lb">Review &amp; edit<span class="st">After upload</span></span></a></li>
+          <li class="todo"><a aria-disabled="true"><span class="mk">3</span><span class="lb">Force distributor<span class="st">Commanders, senior raters</span></span></a></li>
+          <li class="todo"><a aria-disabled="true"><span class="mk">4</span><span class="lb">Download PDF<span class="st">CUI-marked</span></span></a></li>
+        </ol>
+      </aside>
+      <main class="main">
+        <div class="ph">
+          <div>
+            <div class="meta"><span>Step 1 of 4</span></div>
+            <h2>Upload your roster</h2>
+            <p class="desc">PACE sorts every member into Eligible, Ineligible, Discrepancy, BTZ and Small Unit. You can review and fix anything on the next step.</p>
+          </div>
+        </div>
+        <div class="up-grid">
+          <section class="panel" aria-labelledby="up-form-h">
+            <div class="panel-h"><h3 id="up-form-h">Cycle and file</h3></div>
+            <div class="panel-b">
+              <div class="two">
+                <div class="field"><label for="u-cyc">Promotion cycle</label><div class="sel"><select class="ctl" id="u-cyc"><option>Select cycle</option><option>Senior Airman (SRA)</option><option selected>Staff Sergeant (SSG)</option><option>Technical Sergeant (TSG)</option><option>Master Sergeant (MSG)</option><option>Senior Master Sergeant (SMS)</option></select><svg class="i"><use href="#i-chev-d"/></svg></div></div>
+                <div class="field"><label for="u-yr">Calendar year</label><div class="sel"><select class="ctl" id="u-yr"><option>Select year</option><option>2025</option><option selected>2026</option><option>2027</option></select><svg class="i"><use href="#i-chev-d"/></svg></div></div>
+              </div>
+              <div class="field">
+                <span class="label">Roster file <span class="anno" aria-label="Note 1">1</span></span>
+                <div class="drop">
+                  <div class="big">Drag the roster here</div>
+                  <div class="sm">.xlsx or .csv &middot; one sheet &middot; headers in row 1</div>
+                  <button type="button" class="btn btn-secondary btn-sm">Choose file</button>
+                </div>
+                <div class="file">
+                  <svg class="i" style="width:20px;height:20px;color:var(--ink-3)"><use href="#i-file"/></svg>
+                  <div><div class="fn">roster_ZZ1TEST.xlsx</div><div class="fm">48 KB &middot; 412 rows &middot; added just now</div></div>
+                  <button type="button" class="act" aria-label="Remove roster_ZZ1TEST.xlsx">Remove</button>
+                </div>
+              </div>
+              <div class="field">
+                <span class="label">Checked in your browser <span class="anno" aria-label="Note 2">2</span></span>
+                <ul class="checks">
+                  <li><svg class="i ok"><use href="#i-check"/></svg>10 of 10 required columns found</li>
+                  <li><svg class="i ok"><use href="#i-check"/></svg>6 of 6 additional columns found</li>
+                  <li><svg class="i ok"><use href="#i-check"/></svg>No PII columns found</li>
+                </ul>
+              </div>
+            </div>
+          </section>
+
+          <section class="panel" aria-labelledby="up-cols-h">
+            <div class="panel-h"><h3 id="up-cols-h">Before you upload</h3><p>Column names must match exactly, including case.</p></div>
+            <div class="sect">
+              <h4>Required <span>can't be blank &middot; 10</span></h4>
+              <div class="cols"><span>FULL_NAME</span><span>GRADE</span><span>ASSIGNED_PAS</span><span>ASSIGNED_PAS_CLEARTEXT</span><span>DAFSC</span><span>PAFSC</span><span>DOR</span><span>DATE_ARRIVED_STATION</span><span>TAFMSD</span><span>REENL_ELIG_STATUS</span></div>
+            </div>
+            <div class="sect">
+              <h4>Additional <span>may be blank &middot; 6</span></h4>
+              <div class="cols"><span>GRADE_PERM_PROJ</span><span>UIF_CODE</span><span>UIF_DISPOSITION_DATE</span><span>2AFSC</span><span>3AFSC</span><span>4AFSC</span></div>
+            </div>
+            <details class="pii">
+              <summary><svg class="i chev"><use href="#i-chev-r"/></svg>Remove these PII columns first <span class="n">56 columns</span> <span class="anno" aria-label="Note 3">3</span></summary>
+              <div class="body">
+                <p class="hint">These hold PII or sensitive data PACE doesn't need. Delete them from the sheet before uploading.</p>
+                <div class="cols pii-cols"><span>SSAN</span><span>DATE_OF_BIRTH</span><span>HOME_ADDRESS</span><span>HOME_PHONE_NUMBER</span><span>SPOUSE_SSAN</span><span>DUTY_PHONE</span><span>SUPV_NAME</span><span>MARITAL_STATUS</span><span>LAST_EVAL_RATING</span><span>SEC_CLR</span><span>DEROS</span><span>&hellip; 45 more</span></div>
+              </div>
+            </details>
+          </section>
+        </div>
+        <div class="actionbar">
+          <div class="status"><span class="muted">Nothing is stored. Closing this tab ends the session.</span></div>
+          <button type="button" class="btn btn-primary">Process roster<svg class="i"><use href="#i-arrow-r"/></svg></button>
+        </div>
+      </main>
+    </div>
+  </div>
+  <ol class="notes">
+    <li><span class="anno">1</span><span>The drop area uses Hollow Root's linen texture and a solid stone border. No dashed box, no cloud icon. After a file is added, a file row shows its name, size and row count, with a Remove button.</span></li>
+    <li><span class="anno">2</span><span><b>New (concept):</b> read the header row in the browser before uploading, so a missing column or a PII column is caught here instead of after a server round trip.</span></li>
+    <li><span class="anno">3</span><span>The 56-column PII list is folded away by default. The required columns, which matter every time, stay visible as mono chips.</span></li>
+    <li><span class="anno">&middot;</span><span>Current build's three cards with green check icons and blue "Note" boxes become one panel with three sections; the notes are absorbed into the panel header.</span></li>
+  </ol>
+
+  <!-- ===================== B. REVIEW ===================== -->
+  <div class="screen-h" id="review"><h3>B &middot; Review &amp; edit</h3><p>The key screen. "All" view, sorted A&ndash;Z, with one "Move to eligible" open inline.</p></div>
+  <div class="frame">
+    <div class="frame-bar"><span class="url">test.pacetool.app/initial-mel</span></div>
+    <div class="cui" role="note"><b>CUI</b><span class="more">Controlled Unclassified Information &middot; roster data is not stored</span></div>
+    <div class="topbar">
+      <a class="brand" href="#review"><span class="wm">PACE</span><span class="tl">Promotion tool</span></a>
+      <nav class="topnav" aria-label="Tools"><a href="#review" aria-current="page">Initial MEL</a><a href="#review">Final MEL</a><a href="#review">BTZ calculator</a><a href="#review">Memo generator</a></nav>
+      <div class="right"><a href="#review" class="hide-sm">How to use</a></div>
+    </div>
+    <div class="app-body">
+      <aside class="rail" aria-label="Progress">
+        <div class="doc-kind"><div class="k">Initial MEL</div><div class="v">SSG &middot; 2026</div></div>
+        <ol class="steps">
+          <li class="done"><a href="#upload"><span class="mk"><svg class="i" style="width:14px;height:14px"><use href="#i-check"/></svg></span><span class="lb">Upload roster<span class="st">412 members, 4 units</span></span></a></li>
+          <li class="cur"><a href="#review" aria-current="step"><span class="mk">2</span><span class="lb">Review &amp; edit<span class="st warn-t">3 discrepancies to review</span></span></a></li>
+          <li class="todo"><a href="#fd"><span class="mk">3</span><span class="lb">Force distributor<span class="st">4 units to fill</span></span></a></li>
+          <li class="todo"><a aria-disabled="true"><span class="mk">4</span><span class="lb">Download PDF<span class="st">CUI-marked</span></span></a></li>
+        </ol>
+        <dl class="session">
+          <dt>Cycle</dt><dd>SSG</dd>
+          <dt>Year</dt><dd class="num">2026</dd>
+          <dt>File</dt><dd>roster_ZZ1TEST.xlsx</dd>
+          <dt>Processed</dt><dd class="num">14:02</dd>
+          <dt>Session</dt><dd class="code" style="font-size:12px">a91f&hellip;03c</dd>
+        </dl>
+        <a class="startover" href="#upload">Start over with a new file</a>
+      </aside>
+
+      <main class="main">
+        <div class="ph">
+          <div>
+            <div class="meta"><span>Step 2 of 4</span><span class="sep"></span><span>Initial MEL</span><span class="sep"></span><span>SSG &middot; 2026</span></div>
+            <h2>Review the roster</h2>
+            <p class="desc">Check each category, fix anything flagged, then continue. Changes are kept for this session only.</p>
+          </div>
+          <div class="acts">
+            <button type="button" class="btn btn-secondary btn-sm"><svg class="i"><use href="#i-refresh"/></svg>Re-process</button>
+            <button type="button" class="btn btn-secondary btn-sm"><svg class="i"><use href="#i-plus"/></svg>Add member</button>
+          </div>
+        </div>
+
+        <section class="attn" aria-labelledby="attn-h">
+          <h3 class="ttl" id="attn-h">Needs attention <span class="anno" aria-label="Note 1">1</span></h3>
+          <ul>
+            <li style="--dot:var(--disc)"><a href="#review" data-go="discrepancy">3 discrepancies</a> to review: missing dates or skill level</li>
+            <li style="--dot:var(--inel)"><a href="#review" data-go="ineligible">24 ineligible</a> &mdash; move any you have a waiver for</li>
+            <li style="--dot:var(--harbor)">1 manual override this session</li>
+          </ul>
+          <p class="stale"><svg class="i"><use href="#i-alert"/></svg>2 edits since the last processing run. Re-process to re-sort categories.</p>
+        </section>
+
+        <div class="cats" role="tablist" aria-label="Category">
+          <button role="tab" aria-selected="true" data-cat="all"><span class="d"></span>All <span class="n">412</span></button>
+          <button role="tab" aria-selected="false" data-cat="eligible" style="--dot:var(--elig)"><span class="d"></span>Eligible <span class="n">371</span></button>
+          <button role="tab" aria-selected="false" data-cat="ineligible" style="--dot:var(--inel)"><span class="d"></span>Ineligible <span class="n">24</span></button>
+          <button role="tab" aria-selected="false" data-cat="discrepancy" style="--dot:var(--disc)"><span class="d"></span>Discrepancy <span class="n">3</span> <span class="flag">Review</span></button>
+          <button role="tab" aria-selected="false" data-cat="btz" style="--dot:var(--btz)"><span class="d"></span>BTZ <span class="n">9</span></button>
+          <button role="tab" aria-selected="false" data-cat="small" style="--dot:var(--small)"><span class="d"></span>Small unit <span class="n">5</span></button>
+        </div>
+
+        <div class="toolbar">
+          <div class="search"><label class="vh" for="q">Search members</label><svg class="i"><use href="#i-search"/></svg><input class="ctl" id="q" type="search" placeholder="Search name, PAS or AFSC" autocomplete="off"><kbd aria-hidden="true">/</kbd></div>
+          <div class="sel"><label class="vh" for="unit">Unit</label><select class="ctl" id="unit"><option>All units (4)</option><option>ZZ1TEST &middot; 1st Test Squadron</option><option>ZZ2TEST &middot; 2nd Test Squadron</option><option>ZZ3TEST &middot; 3rd Test Flight</option><option>ZZ9TEST &middot; Test Detachment 9</option></select><svg class="i"><use href="#i-chev-d"/></svg></div>
+          <label class="chk"><input type="checkbox"> Only my changes</label>
+          <div class="end"><span class="anno" aria-label="Note 2" style="align-self:center">2</span></div>
+        </div>
+
+        <div class="tw" role="region" aria-label="Roster members" tabindex="0">
+          <table class="roster">
+            <caption class="vh">Roster members, sorted by last name A to Z</caption>
+            <thead><tr>
+              <th scope="col" aria-sort="ascending"><span class="sort">Name<svg class="i" style="width:12px;height:12px"><use href="#i-arrow-up"/></svg></span></th>
+              <th scope="col">Grade</th>
+              <th scope="col">DAFSC</th>
+              <th scope="col">DOR</th>
+              <th scope="col">PAS</th>
+              <th scope="col">Status &amp; reason <span class="anno" aria-label="Note 3" style="margin-left:4px">3</span></th>
+              <th scope="col" style="text-align:right">Actions</th>
+            </tr></thead>
+            <tbody id="rows">
+              <tr class="m" data-cat="eligible" tabindex="0"><td class="nm">TESTALPHA, ADAM B.</td><td>SRA</td><td class="code">3F051</td><td class="num nw">01-FEB-2023</td><td class="code">ZZ1TEST</td><td class="why"><span class="tag t-elig">Eligible</span></td><td><div class="acts"><button class="act" type="button" aria-label="Edit TESTALPHA, ADAM B."><svg class="i"><use href="#i-pencil"/></svg>Edit</button><button class="act del" type="button" aria-label="Delete TESTALPHA, ADAM B."><svg class="i"><use href="#i-trash"/></svg></button></div></td></tr>
+
+              <tr class="m override" data-cat="eligible" tabindex="0"><td class="nm">TESTBRAVO, BETH C.</td><td>SRA</td><td class="code">1N051</td><td class="num nw">15-AUG-2025</td><td class="code">ZZ1TEST</td><td class="why"><span class="tag t-elig">Eligible</span> <span class="badge" title="Moved to Eligible by you">Override</span> <span class="anno" aria-label="Note 4">4</span><span class="raw prose">Moved from Ineligible &middot; &ldquo;TIG waiver approved, memo 12-OCT-2026&rdquo;</span></td><td><div class="acts"><button class="act" type="button">Undo move</button><button class="act" type="button" aria-label="Edit TESTBRAVO, BETH C."><svg class="i"><use href="#i-pencil"/></svg>Edit</button><button class="act del" type="button" aria-label="Delete TESTBRAVO, BETH C."><svg class="i"><use href="#i-trash"/></svg></button></div></td></tr>
+
+              <tr class="m" data-cat="discrepancy" tabindex="0"><td class="nm">TESTCHARLIE, CARL D.</td><td>SRA</td><td class="code">3D051</td><td class="nw missing">Missing</td><td class="code">ZZ1TEST</td><td class="why"><span class="tag t-disc">Discrepancy</span><span class="rs">Date of rank is missing or unreadable</span><span class="raw">Required date missing or unreadable</span></td><td><div class="acts"><button class="act fix" type="button" aria-label="Fix TESTCHARLIE, CARL D."><svg class="i"><use href="#i-pencil"/></svg>Fix</button><button class="act move" type="button" aria-label="Move TESTCHARLIE, CARL D. to eligible"><svg class="i"><use href="#i-move"/></svg>Move to eligible</button><button class="act del" type="button" aria-label="Delete TESTCHARLIE, CARL D."><svg class="i"><use href="#i-trash"/></svg></button></div></td></tr>
+
+              <tr class="m" data-cat="ineligible" tabindex="0"><td class="nm">TESTDELTA, DANA E.</td><td>SRA</td><td class="code">2A651</td><td class="num nw">01-JUL-2026</td><td class="code">ZZ2TEST</td><td class="why"><span class="tag t-inel">Ineligible</span><span class="rs">Under 6 months time in grade</span><span class="raw">TIG: &lt; 6 months</span></td><td><div class="acts"><button class="act" type="button" aria-label="Edit TESTDELTA, DANA E."><svg class="i"><use href="#i-pencil"/></svg>Edit</button><button class="act move" type="button" aria-expanded="true" aria-controls="mv-delta"><svg class="i"><use href="#i-move"/></svg>Move to eligible</button><button class="act del" type="button" aria-label="Delete TESTDELTA, DANA E."><svg class="i"><use href="#i-trash"/></svg></button></div></td></tr>
+              <tr class="inline" id="mv-delta" data-cat="ineligible"><td colspan="7">
+                <form class="inline-form" onsubmit="return false">
+                  <div class="field"><label for="mv-r">Why should TESTDELTA, DANA E. be eligible? <span class="req">Required</span> <span class="anno" aria-label="Note 5">5</span></label><input class="ctl" id="mv-r" placeholder="e.g. TIG waiver approved, memo dated DD-MMM-YYYY" value="TIG waiver approved by CC, memo 03-NOV-2026"></div>
+                  <div class="btns"><button type="button" class="btn btn-tertiary btn-sm">Cancel</button><button type="button" class="btn btn-secondary btn-sm" style="border-color:var(--elig);color:var(--elig)"><svg class="i"><use href="#i-check"/></svg>Move to eligible</button></div>
+                  <p class="fine">The member will show an OVERRIDE badge with this reason. You can undo it any time before you download.</p>
+                </form>
+              </td></tr>
+
+              <tr class="m" data-cat="eligible" tabindex="0"><td class="nm">TESTECHO, EVAN F.</td><td>SRA</td><td class="code">3F051</td><td class="num nw">01-MAR-2023</td><td class="code">ZZ2TEST</td><td class="why"><span class="tag t-elig">Eligible</span></td><td><div class="acts"><button class="act" type="button" aria-label="Edit TESTECHO, EVAN F."><svg class="i"><use href="#i-pencil"/></svg>Edit</button><button class="act del" type="button" aria-label="Delete TESTECHO, EVAN F."><svg class="i"><use href="#i-trash"/></svg></button></div></td></tr>
+
+              <tr class="m" data-cat="btz" tabindex="0"><td class="nm">TESTFOXTROT, FAYE G.</td><td>A1C</td><td class="code">1D751</td><td class="num nw">15-NOV-2024</td><td class="code">ZZ2TEST</td><td class="why"><span class="tag t-btz">BTZ</span><span class="rs">Below-the-zone candidate</span></td><td><div class="acts"><button class="act" type="button" aria-label="Edit TESTFOXTROT, FAYE G."><svg class="i"><use href="#i-pencil"/></svg>Edit</button><button class="act del" type="button" aria-label="Delete TESTFOXTROT, FAYE G."><svg class="i"><use href="#i-trash"/></svg></button></div></td></tr>
+
+              <tr class="m" data-cat="ineligible" tabindex="0"><td class="nm">TESTGOLF, GREG H.</td><td>SRA</td><td class="code">2W151</td><td class="num nw">01-SEP-2022</td><td class="code">ZZ2TEST</td><td class="why"><span class="tag t-inel">Ineligible</span><span class="rs">Open UIF on record</span><span class="raw">UIF code: 3</span></td><td><div class="acts"><button class="act" type="button" aria-label="Edit TESTGOLF, GREG H."><svg class="i"><use href="#i-pencil"/></svg>Edit</button><button class="act move" type="button" aria-label="Move TESTGOLF, GREG H. to eligible"><svg class="i"><use href="#i-move"/></svg>Move to eligible</button><button class="act del" type="button" aria-label="Delete TESTGOLF, GREG H."><svg class="i"><use href="#i-trash"/></svg></button></div></td></tr>
+
+              <tr class="m" data-cat="eligible" tabindex="0"><td class="nm">TESTHOTEL, HANNA J.</td><td>SRA</td><td class="code">4N051</td><td class="num nw">01-JAN-2024</td><td class="code">ZZ3TEST</td><td class="why"><span class="tag t-elig">Eligible</span></td><td><div class="acts"><button class="act" type="button" aria-label="Edit TESTHOTEL, HANNA J."><svg class="i"><use href="#i-pencil"/></svg>Edit</button><button class="act del" type="button" aria-label="Delete TESTHOTEL, HANNA J."><svg class="i"><use href="#i-trash"/></svg></button></div></td></tr>
+
+              <tr class="m" data-cat="discrepancy" tabindex="0"><td class="nm">TESTINDIA, IAN K.</td><td>SRA</td><td class="code">3F031</td><td class="num nw">01-APR-2023</td><td class="code">ZZ3TEST</td><td class="why"><span class="tag t-disc">Discrepancy</span><span class="rs">PAFSC skill level too low for this cycle</span><span class="raw">Insufficient PAFSC skill level.</span></td><td><div class="acts"><button class="act fix" type="button" aria-label="Fix TESTINDIA, IAN K."><svg class="i"><use href="#i-pencil"/></svg>Fix</button><button class="act move" type="button" aria-label="Move TESTINDIA, IAN K. to eligible"><svg class="i"><use href="#i-move"/></svg>Move to eligible</button><button class="act del" type="button" aria-label="Delete TESTINDIA, IAN K."><svg class="i"><use href="#i-trash"/></svg></button></div></td></tr>
+
+              <tr class="m" data-cat="small" tabindex="0"><td class="nm">TESTJULIET, JADE L.</td><td>SRA</td><td class="code">1C051</td><td class="num nw">01-DEC-2023</td><td class="code">ZZ9TEST</td><td class="why"><span class="tag t-small">Small unit</span><span class="rs">Rated by the small-unit senior rater</span></td><td><div class="acts"><button class="act" type="button" aria-label="Edit TESTJULIET, JADE L."><svg class="i"><use href="#i-pencil"/></svg>Edit</button><button class="act del" type="button" aria-label="Delete TESTJULIET, JADE L."><svg class="i"><use href="#i-trash"/></svg></button></div></td></tr>
+
+              <tr class="m" data-cat="ineligible" tabindex="0"><td class="nm">TESTKILO, KYLE M.</td><td>SRA</td><td class="code">2T251</td><td class="num nw">01-MAY-2024</td><td class="code">ZZ3TEST</td><td class="why"><span class="tag t-inel">Ineligible</span><span class="rs">Under 3 years time in service</span><span class="raw">TIS &lt; 3 years</span></td><td><div class="acts"><button class="act" type="button" aria-label="Edit TESTKILO, KYLE M."><svg class="i"><use href="#i-pencil"/></svg>Edit</button><button class="act move" type="button" aria-label="Move TESTKILO, KYLE M. to eligible"><svg class="i"><use href="#i-move"/></svg>Move to eligible</button><button class="act del" type="button" aria-label="Delete TESTKILO, KYLE M."><svg class="i"><use href="#i-trash"/></svg></button></div></td></tr>
+
+              <tr class="m" data-cat="eligible" tabindex="0"><td class="nm">TESTLIMA, LENA N.</td><td>SRA</td><td class="code">3E051</td><td class="num nw">01-OCT-2023</td><td class="code">ZZ1TEST</td><td class="why"><span class="tag t-elig">Eligible</span></td><td><div class="acts"><button class="act" type="button" aria-label="Edit TESTLIMA, LENA N."><svg class="i"><use href="#i-pencil"/></svg>Edit</button><button class="act del" type="button" aria-label="Delete TESTLIMA, LENA N."><svg class="i"><use href="#i-trash"/></svg></button></div></td></tr>
+
+              <tr class="m" data-cat="discrepancy" tabindex="0"><td class="nm">TESTMIKE, MARK P.</td><td>SRA</td><td class="code">3F051</td><td class="num nw">01-JUN-2023</td><td class="code">ZZ1TEST</td><td class="why"><span class="tag t-disc">Discrepancy</span><span class="rs">TAFMSD is missing or unreadable</span><span class="raw">Required date missing or unreadable</span></td><td><div class="acts"><button class="act fix" type="button" aria-label="Fix TESTMIKE, MARK P."><svg class="i"><use href="#i-pencil"/></svg>Fix</button><button class="act move" type="button" aria-label="Move TESTMIKE, MARK P. to eligible"><svg class="i"><use href="#i-move"/></svg>Move to eligible</button><button class="act del" type="button" aria-label="Delete TESTMIKE, MARK P."><svg class="i"><use href="#i-trash"/></svg></button></div></td></tr>
+              <tr id="empty" hidden><td colspan="7" style="padding:28px 16px;text-align:center;color:var(--ink-3)">No members match. Clear the search or pick another category.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="tfoot">
+          <span id="showing">Showing 13 of 412 (sample rows)</span>
+          <div class="keys" aria-label="Keyboard shortcuts"><span><kbd>/</kbd> search</span><span><kbd>&uarr;</kbd><kbd>&darr;</kbd> move between rows</span><span><kbd>E</kbd> edit</span><span><kbd>M</kbd> move to eligible</span><span><kbd>N</kbd> add member</span> <span class="anno" aria-label="Note 6">6</span></div>
+          <div class="pg"><button class="btn btn-secondary btn-sm" type="button" aria-disabled="true">Previous</button><span class="num">1 / 9</span><button class="btn btn-secondary btn-sm" type="button">Next</button></div>
+        </div>
+
+        <div class="actionbar">
+          <a class="btn btn-tertiary" href="#upload"><svg class="i"><use href="#i-arrow-l"/></svg>Back to upload</a>
+          <div class="status"><span class="d"></span>3 discrepancies not yet reviewed. You can continue; they'll print as discrepancies. <span class="anno" aria-label="Note 7">7</span></div>
+          <a class="btn btn-primary" href="#fd">Continue to force distributor<svg class="i"><use href="#i-arrow-r"/></svg></a>
+        </div>
+      </main>
+    </div>
+  </div>
+  <ol class="notes">
+    <li><span class="anno">1</span><span><b>Summary bar</b> replaces the six icon-bubble stat tiles. It says what to do ("3 discrepancies to review") and links filter the table. It also warns when edits haven't been re-processed, so Re-process stops being a mystery button.</span></li>
+    <li><span class="anno">2</span><span>Category tabs carry the counts (one place, not two). "Review" flags the category that needs a decision. Search, unit filter and "Only my changes" sit on one 36px toolbar. Try the tabs and the <kbd>/</kbd> key.</span></li>
+    <li><span class="anno">3</span><span>Reason in plain words first, with the engine's own string underneath in mono (<span class="code">TIG: &lt; 6 months</span>, <span class="code">UIF code: 3</span>) so admins can trace it to the rule. Missing dates print as "Missing" in red in their own column.</span></li>
+    <li><span class="anno">4</span><span><b>Override</b>: a square OVERRIDE badge, a 3px harbor edge on the row, the original category and the reason shown in the row, and an "Undo move" action.</span></li>
+    <li><span class="anno">5</span><span><b>Move to eligible</b> opens inline under the row (no modal), focuses the reason field, and requires a reason. The confirm button is green outline, not a second primary.</span></li>
+    <li><span class="anno">6</span><span>Rows are focusable. Arrow keys move between rows, E / M / Delete act on the focused row, and every action button has a full aria-label ("Move TESTGOLF, GREG H. to eligible"). Actions are always visible, not hover-only.</span></li>
+    <li><span class="anno">7</span><span>The sticky action bar always shows Back, the one primary action, and the outstanding issue. <i>Assumption to confirm with Drew:</i> whether unreviewed discrepancies should block continuing.</span></li>
+    <li><span class="anno">&middot;</span><span>Upload Logo (today a big green button) moves to step 4 (Download), where the logo is actually used.</span></li>
+  </ol>
+
+  <!-- ===================== C. FORCE DISTRIBUTOR ===================== -->
+  <div class="screen-h" id="fd"><h3>C &middot; Force distributor</h3><p>Per-PASCODE forms. ZZ2TEST is half filled and was just submitted, so it shows its validation state.</p></div>
+  <div class="frame">
+    <div class="frame-bar"><span class="url">test.pacetool.app/initial-mel</span></div>
+    <div class="cui" role="note"><b>CUI</b><span class="more">Controlled Unclassified Information &middot; roster data is not stored</span></div>
+    <div class="topbar">
+      <a class="brand" href="#fd"><span class="wm">PACE</span><span class="tl">Promotion tool</span></a>
+      <nav class="topnav" aria-label="Tools"><a href="#fd" aria-current="page">Initial MEL</a><a href="#fd">Final MEL</a><a href="#fd">BTZ calculator</a><a href="#fd">Memo generator</a></nav>
+      <div class="right"><a href="#fd" class="hide-sm">How to use</a></div>
+    </div>
+    <div class="app-body">
+      <aside class="rail" aria-label="Progress">
+        <div class="doc-kind"><div class="k">Initial MEL</div><div class="v">SSG &middot; 2026</div></div>
+        <ol class="steps">
+          <li class="done"><a href="#upload"><span class="mk"><svg class="i" style="width:14px;height:14px"><use href="#i-check"/></svg></span><span class="lb">Upload roster<span class="st">412 members, 4 units</span></span></a></li>
+          <li class="done"><a href="#review"><span class="mk"><svg class="i" style="width:14px;height:14px"><use href="#i-check"/></svg></span><span class="lb">Review &amp; edit<span class="st">2 overrides &middot; 1 added</span></span></a></li>
+          <li class="cur"><a href="#fd" aria-current="step"><span class="mk">3</span><span class="lb">Force distributor<span class="st warn-t">1 of 4 complete</span></span></a></li>
+          <li class="todo"><a aria-disabled="true"><span class="mk">4</span><span class="lb">Download PDF<span class="st">CUI-marked</span></span></a></li>
+        </ol>
+        <dl class="session">
+          <dt>Cycle</dt><dd>SSG</dd>
+          <dt>Year</dt><dd class="num">2026</dd>
+          <dt>File</dt><dd>roster_ZZ1TEST.xlsx</dd>
+        </dl>
+      </aside>
+      <main class="main">
+        <div class="ph">
+          <div>
+            <div class="meta"><span>Step 3 of 4</span><span class="sep"></span><span>Initial MEL</span><span class="sep"></span><span>SSG &middot; 2026</span></div>
+            <h2>Force distributor</h2>
+            <p class="desc">Enter the unit commander and senior rater for each unit. These appear in the MEL's signature blocks.</p>
+          </div>
+        </div>
+        <div class="fd-grid">
+          <nav aria-label="Units">
+            <ul class="units">
+              <li class="grp">Units &middot; 1 of 4 complete <span class="anno" aria-label="Note 1">1</span></li>
+              <li><a href="#fd"><span class="pc">ZZ1TEST</span><span class="un">1st Test Squadron &middot; 182 members</span><span class="us ok">Complete</span></a></li>
+              <li><a href="#fd" aria-current="true"><span class="pc">ZZ2TEST</span><span class="un">2nd Test Squadron &middot; 141 members</span><span class="us part">2 fields missing</span></a></li>
+              <li><a href="#fd"><span class="pc">ZZ3TEST</span><span class="un">3rd Test Flight &middot; 84 members</span><span class="us none">Not started</span></a></li>
+              <li class="grp">Small unit</li>
+              <li><a href="#fd"><span class="pc" style="font-family:var(--font-sans)">Senior rater</span><span class="un">ZZ9TEST &middot; 5 members</span><span class="us none">Not started</span></a></li>
+            </ul>
+          </nav>
+
+          <form onsubmit="return false" novalidate aria-labelledby="fd-h">
+            <h3 id="fd-h" class="vh">ZZ2TEST, 2nd Test Squadron</h3>
+            <div class="msg error" role="alert" style="margin-bottom:16px"><b>2 fields need attention for ZZ2TEST:</b> <a href="#sr-id">Senior rater ID (SRID)</a>, <a href="#sr-last">Senior rater last name</a>. <span class="anno" aria-label="Note 2">2</span></div>
+
+            <fieldset class="fs">
+              <legend>Unit commander <span class="lhint">ZZ2TEST &middot; 2nd Test Squadron</span></legend>
+              <div class="body">
+                <div class="g-3">
+                  <div class="field"><label for="c-rank">Rank</label><div class="sel"><select class="ctl" id="c-rank"><option>Select rank</option><option>Capt</option><option>Maj</option><option selected>Lt Col</option><option>Col</option></select><svg class="i"><use href="#i-chev-d"/></svg></div></div>
+                  <div class="field"><label for="c-title">Title</label><input class="ctl" id="c-title" placeholder="Commander" value="Commander"></div>
+                </div>
+                <div class="g-name">
+                  <div class="field"><label for="c-first">First name</label><input class="ctl" id="c-first" placeholder="FIRST" value="OSCAR"></div>
+                  <div class="field"><label for="c-mi">MI <span class="opt">opt.</span></label><input class="ctl" id="c-mi" placeholder="M" value="Q" maxlength="1"></div>
+                  <div class="field"><label for="c-last">Last name</label><input class="ctl" id="c-last" placeholder="LAST" value="TESTCMDR"></div>
+                </div>
+                <div class="prints"><span class="k">Prints as</span><span class="v">OSCAR Q. TESTCMDR, Lt Col, USAF</span><span class="v muted">Commander</span> <span class="anno" aria-label="Note 3">3</span></div>
+              </div>
+            </fieldset>
+
+            <fieldset class="fs">
+              <legend>Senior rater <button type="button" class="btn btn-secondary btn-sm" style="font-weight:500"><svg class="i"><use href="#i-copy"/></svg>Copy from ZZ1TEST</button></legend>
+              <div class="body">
+                <div class="field" style="max-width:280px">
+                  <label for="sr-id">Senior rater ID (SRID)</label>
+                  <input class="ctl mono" id="sr-id" inputmode="numeric" placeholder="e.g. 1234567" aria-invalid="true" aria-describedby="sr-id-err">
+                  <p class="err" id="sr-id-err"><svg class="i"><use href="#i-alert"/></svg>Enter the SRID. It's on the senior rater's eval roster.</p>
+                </div>
+                <div class="g-3">
+                  <div class="field"><label for="s-rank">Rank</label><div class="sel"><select class="ctl" id="s-rank"><option>Select rank</option><option>Lt Col</option><option selected>Col</option><option>Brig Gen</option></select><svg class="i"><use href="#i-chev-d"/></svg></div></div>
+                  <div class="field"><label for="s-title">Title</label><input class="ctl" id="s-title" placeholder="Commander"><p class="hint">e.g. Commander, 99th Test Group</p></div>
+                </div>
+                <div class="g-name">
+                  <div class="field"><label for="s-first">First name</label><input class="ctl" id="s-first" placeholder="FIRST" value="PAULA"></div>
+                  <div class="field"><label for="s-mi">MI <span class="opt">opt.</span></label><input class="ctl" id="s-mi" placeholder="M" maxlength="1"></div>
+                  <div class="field"><label for="sr-last">Last name</label><input class="ctl" id="sr-last" placeholder="LAST" aria-invalid="true" aria-describedby="sr-last-err"><p class="err" id="sr-last-err"><svg class="i"><use href="#i-alert"/></svg>Enter the senior rater's last name.</p></div>
+                </div>
+                <div class="prints"><span class="k">Prints as</span><span class="v">PAULA <span class="gap">[last name]</span>, Col, USAF</span><span class="v muted">Commander</span></div>
+              </div>
+            </fieldset>
+
+            <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px">
+              <button type="button" class="btn btn-secondary">Save and go to ZZ3TEST<svg class="i"><use href="#i-arrow-r"/></svg></button>
+            </div>
+          </form>
+        </div>
+        <div class="actionbar">
+          <a class="btn btn-tertiary" href="#review"><svg class="i"><use href="#i-arrow-l"/></svg>Back to review</a>
+          <div class="status"><span class="d"></span>3 units still need details before the PDF can be generated.</div>
+          <button type="button" class="btn btn-primary" aria-disabled="true" title="Complete all 4 units first"><svg class="i"><use href="#i-download"/></svg>Generate PDF</button>
+        </div>
+      </main>
+    </div>
+  </div>
+  <ol class="notes">
+    <li><span class="anno">1</span><span><b>Unit list with completion</b> replaces PASCODE tabs. Each unit shows Complete / N fields missing / Not started. The small-unit senior rater is its own item, so it can't be missed at the bottom of the page.</span></li>
+    <li><span class="anno">2</span><span>Validation runs on "Save and go to" or Generate, not on every keystroke. An error summary at the top links to each field. Each field has a red 2px border, an icon, and a specific message wired with aria-describedby. Fields stay empty: placeholders are hints, never pre-filled fake values.</span></li>
+    <li><span class="anno">3</span><span><b>Prints as</b> shows the signature line as it will appear on the PDF, so typos and missing parts show up before generating. The exact format must match the backend's PDF template.</span></li>
+    <li><span class="anno">&middot;</span><span><b>Copy from ZZ1TEST</b>: units under one group usually share a senior rater, so this saves re-typing the SRID and name four times. Middle initial is the only optional field and says so; nothing else carries an asterisk.</span></li>
+  </ol>
+
+  <!-- ===================== D. EDIT DIALOG ===================== -->
+  <div class="screen-h" id="dialog"><h3>D &middot; Edit member dialog</h3><p>Opened with "Fix" on a discrepancy row. Add member uses the same form, empty, with a required "Reason for adding" field.</p></div>
+  <div class="frame dlg-stage">
+    <div class="frame-bar"><span class="url">test.pacetool.app/initial-mel</span></div>
+    <div class="ghost" aria-hidden="true">
+      <div class="cui"><b>CUI</b><span class="more">Controlled Unclassified Information &middot; roster data is not stored</span></div>
+      <div class="topbar"><span class="brand"><span class="wm">PACE</span><span class="tl">Promotion tool</span></span></div>
+      <div class="app-body" style="min-height:860px">
+        <div class="rail"></div>
+        <div class="main"><div class="ph"><div><div class="meta">Step 2 of 4</div><h2>Review the roster</h2></div></div></div>
+      </div>
+    </div>
+    <div class="scrimlayer">
+      <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="dlg-h">
+        <header>
+          <div>
+            <h3 id="dlg-h">Edit member</h3>
+            <div class="who"><b style="color:var(--ink)">TESTCHARLIE, CARL D.</b><span class="code">ZZ1TEST</span><span class="tag t-disc">Discrepancy</span></div>
+          </div>
+          <button class="xbtn" type="button" aria-label="Close"><svg class="i"><use href="#i-x"/></svg></button>
+        </header>
+        <div class="dbody">
+          <div class="msg warn" style="margin-bottom:6px"><b>Why it's flagged:</b> Date of rank is missing or unreadable. Correct it below; PACE re-checks this member when you save. <span class="anno" aria-label="Note 1">1</span></div>
+
+          <section class="dsec"><h4>Identity</h4>
+            <div class="flds">
+              <div class="field"><label for="e-name">Full name</label><input class="ctl" id="e-name" value="TESTCHARLIE, CARL D." placeholder="LAST, FIRST M."></div>
+              <div class="field"><label for="e-grade">Grade</label><div class="sel"><select class="ctl" id="e-grade"><option>A1C &ndash; Airman First Class</option><option selected>SRA &ndash; Senior Airman</option><option>SSG &ndash; Staff Sergeant</option></select><svg class="i"><use href="#i-chev-d"/></svg></div></div>
+            </div>
+          </section>
+
+          <section class="dsec"><h4>Time in grade / service<small>Dates as DD-MMM-YYYY</small></h4>
+            <div class="flds">
+              <div class="field changed"><label for="e-dor">Date of rank (DOR)</label><input class="ctl num" id="e-dor" value="3/1/24" placeholder="DD-MMM-YYYY" aria-invalid="true" aria-describedby="e-dor-err" autocomplete="off"><p class="err" id="e-dor-err"><svg class="i"><use href="#i-alert"/></svg>Use DD-MMM-YYYY, like 01-MAR-2024.</p> </div>
+              <div class="field"><label for="e-taf">TAFMSD</label><input class="ctl num" id="e-taf" value="09-SEP-2019" placeholder="DD-MMM-YYYY" aria-describedby="e-taf-h"><p class="hint" id="e-taf-h">DD-MMM-YYYY <span class="anno" aria-label="Note 2">2</span></p></div>
+            </div>
+          </section>
+
+          <section class="dsec"><h4>Assignment</h4>
+            <div class="flds">
+              <div class="field"><label for="e-pas">Assigned PAS</label><input class="ctl mono" id="e-pas" value="ZZ1TEST" placeholder="e.g. ZZ1TEST"></div>
+              <div class="field"><label for="e-das">Date arrived station</label><input class="ctl num" id="e-das" value="15-JUN-2023" placeholder="DD-MMM-YYYY"></div>
+              <div class="field span2"><label for="e-unit">Unit name <span class="opt">ASSIGNED_PAS_CLEARTEXT</span></label><input class="ctl" id="e-unit" value="1st Test Squadron" placeholder="e.g. 1st Test Squadron"></div>
+            </div>
+          </section>
+
+          <section class="dsec"><h4>AFSC</h4>
+            <div class="flds">
+              <div class="field"><label for="e-pafsc">PAFSC</label><input class="ctl mono" id="e-pafsc" value="3D051" placeholder="e.g. 3F051"></div>
+              <div class="field"><label for="e-dafsc">DAFSC</label><input class="ctl mono" id="e-dafsc" value="3D051" placeholder="e.g. 3F051"></div>
+            </div>
+          </section>
+
+          <section class="dsec"><h4>Reenlistment &amp; UIF</h4>
+            <div class="flds">
+              <div class="field"><label for="e-re">RE code</label><input class="ctl mono" id="e-re" value="1A" placeholder="e.g. 1A"></div>
+              <div class="field"><label for="e-uif">UIF code <span class="opt">Optional</span></label><input class="ctl mono" id="e-uif" placeholder="Blank if none"></div>
+              <div class="field"><label for="e-uifd">UIF disposition date <span class="opt">Optional</span></label><input class="ctl num" id="e-uifd" placeholder="DD-MMM-YYYY"></div>
+            </div>
+          </section>
+        </div>
+        <footer>
+          <p class="note">1 field edited &middot; <kbd>Esc</kbd> cancels &middot; <kbd>Ctrl</kbd>+<kbd>Enter</kbd> saves <span class="anno" aria-label="Note 3">3</span></p>
+          <button type="button" class="btn btn-tertiary">Cancel</button>
+          <button type="button" class="btn btn-primary">Save and re-check</button>
+        </footer>
+      </div>
+    </div>
+  </div>
+  <ol class="notes">
+    <li><span class="anno">1</span><span>The dialog starts with why the member is flagged and puts the section holding the bad field first (Time in grade here), so the fix is the first thing you see. Delete stays a separate confirm: a danger-outline button that names the member.</span></li>
+    <li><span class="anno">2</span><span><b>Dates are text</b> in <span class="code">DD-MMM-YYYY</span>. Lenient parsing on blur (<span class="code">3/1/24</span>, <span class="code">2024-03-01</span>, <span class="code">1 mar 24</span> &rarr; <span class="code">01-MAR-2024</span>) would fix most entries automatically. The error shown is for anything that still can't be read. No native date picker; they behave differently on government Edge/Chrome builds.</span></li>
+    <li><span class="anno">3</span><span>Changed fields get a quiet "EDITED" mark beside the label. The footer counts edits and lists the keyboard shortcuts. Focus is trapped in the dialog and returns to the row's Fix button when it closes. The scrim is flat (no blur).</span></li>
+    <li><span class="anno">&middot;</span><span>Labels sit above fields, never inside as placeholders. Codes (PAS, AFSC, RE, UIF) are set in mono so <span class="code">0</span>/<span class="code">O</span> and <span class="code">1</span>/<span class="code">I</span> can be told apart.</span></li>
+  </ol>
+</section>
+
+</div>
+
+<script>
+(function () {
+  // Theme preview toggle: Auto -> Light -> Dark
+  var btn = document.getElementById('themeBtn');
+  var modes = ['auto', 'light', 'dark'], i = 0;
+  btn.addEventListener('click', function () {
+    i = (i + 1) % modes.length;
+    var m = modes[i];
+    if (m === 'auto') document.documentElement.removeAttribute('data-theme');
+    else document.documentElement.setAttribute('data-theme', m);
+    btn.textContent = 'Theme: ' + m.charAt(0).toUpperCase() + m.slice(1);
+  });
+
+  // Review mockup: category tabs + search filter the sample rows
+  var tabs = Array.prototype.slice.call(document.querySelectorAll('.cats [role="tab"]'));
+  var rows = Array.prototype.slice.call(document.querySelectorAll('#rows tr[data-cat]'));
+  var q = document.getElementById('q');
+  var empty = document.getElementById('empty');
+  var showing = document.getElementById('showing');
+  var cat = 'all';
+  function apply() {
+    var term = (q.value || '').trim().toLowerCase(), n = 0;
+    rows.forEach(function (r) {
+      var okCat = cat === 'all' || r.dataset.cat === cat;
+      var okQ = !term || r.textContent.toLowerCase().indexOf(term) > -1;
+      if (r.classList.contains('inline')) { var prev = r.previousElementSibling; okQ = !term || (prev && prev.textContent.toLowerCase().indexOf(term) > -1); }
+      var show = okCat && okQ;
+      r.hidden = !show;
+      if (show && r.classList.contains('m')) n++;
+    });
+    empty.hidden = n !== 0;
+    showing.textContent = 'Showing ' + n + ' sample row' + (n === 1 ? '' : 's');
+  }
+  function select(t) {
+    tabs.forEach(function (x) { x.setAttribute('aria-selected', x === t ? 'true' : 'false'); x.tabIndex = x === t ? 0 : -1; });
+    cat = t.dataset.cat; apply();
+  }
+  tabs.forEach(function (t, idx) {
+    t.tabIndex = idx === 0 ? 0 : -1;
+    t.addEventListener('click', function () { select(t); });
+    t.addEventListener('keydown', function (e) {
+      if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+        e.preventDefault();
+        var j = (idx + (e.key === 'ArrowRight' ? 1 : -1) + tabs.length) % tabs.length;
+        tabs[j].focus(); select(tabs[j]);
+      }
+    });
+  });
+  document.querySelectorAll('[data-go]').forEach(function (a) {
+    a.addEventListener('click', function (e) {
+      e.preventDefault();
+      var t = tabs.filter(function (x) { return x.dataset.cat === a.dataset.go; })[0];
+      if (t) { select(t); t.focus(); }
+    });
+  });
+  q.addEventListener('input', apply);
+  document.addEventListener('keydown', function (e) {
+    var tag = (e.target.tagName || '').toLowerCase();
+    if (e.key === '/' && tag !== 'input' && tag !== 'textarea' && tag !== 'select') { e.preventDefault(); q.focus(); }
+    if ((e.key === 'ArrowDown' || e.key === 'ArrowUp') && e.target.matches && e.target.matches('#rows tr.m')) {
+      e.preventDefault();
+      var vis = rows.filter(function (r) { return r.classList.contains('m') && !r.hidden; });
+      var k = vis.indexOf(e.target) + (e.key === 'ArrowDown' ? 1 : -1);
+      if (vis[k]) vis[k].focus();
+    }
+  });
+})();
+</script>
+</body>
+</html>

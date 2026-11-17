@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { AlertTriangle, BookOpen, ChevronRight } from "lucide-react";
-import { Card, CardBody, CardHeader } from "@/components/ui/Card";
+import { Card, CardBody } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 
 interface Guide {
@@ -111,61 +111,53 @@ const TIPS = [
 
 export default function HowTo() {
   return (
-    <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-10 space-y-8">
-      <div className="flex items-start gap-3">
-        <div className="h-10 w-10 rounded-lg bg-primary text-white flex items-center justify-center shrink-0">
-          <BookOpen className="h-5 w-5" />
-        </div>
-        <div>
-          <h1 className="text-3xl font-bold text-slate-900">How-To Guide</h1>
-          <p className="text-slate-600 mt-1">
-            Step-by-step guide to processing Master Eligibility Lists.
-          </p>
-        </div>
-      </div>
+    <div className="mx-auto max-w-6xl space-y-8 px-4 py-8 sm:px-6 lg:px-8">
+      <header className="border-b border-line pb-5">
+        <span className="eyebrow">Guides</span>
+        <h1 className="page-title mt-2">How-To Guide</h1>
+        <p className="mt-2 max-w-[64ch] text-ink-3">
+          Step-by-step guide to processing Master Eligibility Lists.
+        </p>
+      </header>
 
-      <Card className="border-warning/30 bg-warning/5">
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <AlertTriangle className="h-5 w-5 text-warning" />
-            <h2 className="text-lg font-semibold text-slate-900">
-              Before you upload
-            </h2>
-          </div>
-        </CardHeader>
-        <CardBody>
-          <ul className="space-y-2">
-            {TIPS.map((t) => (
-              <li key={t} className="flex items-start gap-2 text-sm text-slate-700">
-                <ChevronRight className="h-4 w-4 text-warning shrink-0 mt-0.5" />
-                <span>{t}</span>
-              </li>
-            ))}
-          </ul>
-        </CardBody>
-      </Card>
+      <section className="msg msg-warn" aria-labelledby="before-upload">
+        <h2
+          id="before-upload"
+          className="mb-3 flex items-center gap-2 text-base font-semibold text-ink"
+        >
+          <AlertTriangle className="h-5 w-5 shrink-0 text-disc-ink" aria-hidden="true" />
+          Before you upload
+        </h2>
+        <ul className="space-y-2">
+          {TIPS.map((t) => (
+            <li key={t} className="flex items-start gap-2 text-sm text-ink-2">
+              <ChevronRight className="mt-0.5 h-4 w-4 shrink-0 text-ink-3" aria-hidden="true" />
+              <span className="min-w-0">{t}</span>
+            </li>
+          ))}
+        </ul>
+      </section>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {GUIDES.map((g) => (
-          <Card key={g.to}>
+          <Card key={g.to} className="min-w-0">
             <CardBody className="space-y-3">
               <div className="flex items-start justify-between gap-3">
-                <h2 className="text-lg font-semibold text-slate-900">
-                  {g.title}
-                </h2>
+                <h2 className="text-base font-semibold text-ink">{g.title}</h2>
                 {g.badge ? <Badge color="navy">{g.badge}</Badge> : null}
               </div>
-              <p className="text-sm text-slate-600">{g.intro}</p>
-              <ol className="list-decimal list-inside space-y-1.5 text-sm text-slate-700">
+              <p className="text-sm text-ink-3">{g.intro}</p>
+              <ol className="list-inside list-decimal space-y-1.5 text-sm text-ink-2">
                 {g.steps.map((s, i) => (
                   <li key={i}>{s}</li>
                 ))}
               </ol>
               <Link
                 to={g.to}
-                className="inline-block text-sm font-medium text-primary hover:underline"
+                className="inline-block text-sm font-medium text-primary underline decoration-line-strong underline-offset-4 hover:decoration-current"
               >
-                Open tool →
+                Open tool
+                <span aria-hidden="true"> &rarr;</span>
               </Link>
             </CardBody>
           </Card>
@@ -174,27 +166,28 @@ export default function HowTo() {
 
       <Card>
         <CardBody>
-          <h2 className="text-lg font-semibold text-slate-900 mb-3">
+          <h2 className="mb-3 flex items-center gap-2 text-base font-semibold text-ink">
+            <BookOpen className="h-5 w-5 text-ink-3" aria-hidden="true" />
             Reference documents
           </h2>
-          <ul className="space-y-3 text-sm">
+          <ul className="space-y-3 text-sm text-ink-2">
             <li>
-              <span className="font-semibold">DAFI 36-2502.</span> Governs WAPS
+              <span className="font-semibold text-ink">DAFI 36-2502.</span> Governs WAPS
               promotion eligibility, TIG/TIS requirements, HYT limits, and board
               procedures.
             </li>
             <li>
-              <span className="font-semibold">HYT &amp; Reenlistment.</span> HYT
+              <span className="font-semibold text-ink">HYT &amp; Reenlistment.</span> HYT
               limits and reenlistment eligibility rules referenced for TIS cap
               calculations.
             </li>
             <li>
-              <span className="font-semibold">CUI Marking Standards.</span>{" "}
+              <span className="font-semibold text-ink">CUI Marking Standards.</span>{" "}
               Controlled Unclassified Information marking standards applied to
               all MEL PDF outputs.
             </li>
             <li>
-              <span className="font-semibold">AFH 33-337.</span> Official
+              <span className="font-semibold text-ink">AFH 33-337.</span> Official
               correspondence formatting standard used for MFR layout, margins,
               fonts, and signature blocks.
             </li>

@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { Calculator, CheckCircle2, XCircle, AlertCircle } from "lucide-react";
+import { CheckCircle2, XCircle, AlertCircle } from "lucide-react";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { Button } from "@/components/ui/Button";
+import { Tag } from "@/components/ui/Badge";
 import { apiClient } from "@/lib/api";
 import { toBackendDate } from "@/lib/utils";
 import type { PromotionEligibilityResult } from "@/types";
@@ -74,51 +75,43 @@ export default function PromotionCalculator() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="mb-8">
-        <div className="flex items-center space-x-3 mb-2">
-          <div className="p-2 bg-primary/10 rounded-lg">
-            <Calculator className="w-7 h-7 text-primary" />
-          </div>
-          <div>
-            <h2 className="text-3xl font-bold text-slate-900">
-              Promotion Eligibility
-            </h2>
-            <p className="text-slate-500 text-sm mt-0.5">
-              Check TIG, TIS, and HYT requirements for a promotion cycle
-            </p>
-          </div>
-        </div>
-      </div>
+    <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
+      <header className="mb-6 border-b border-line pb-5">
+        <span className="eyebrow">Calculators</span>
+        <h1 className="page-title mt-2">Promotion Eligibility</h1>
+        <p className="mt-2 max-w-[64ch] text-ink-3">
+          Check TIG, TIS, and HYT requirements for a promotion cycle
+        </p>
+      </header>
 
-      <div className="bg-white border border-slate-200 rounded-xl shadow-sm">
-        <div className="border-b border-slate-200 px-6 py-4">
-          <h3 className="text-lg font-semibold text-slate-900">
+      <section className="panel" aria-labelledby="member-info">
+        <div className="border-b border-line px-5 py-4">
+          <h2 id="member-info" className="text-base font-semibold text-ink">
             Member Information
-          </h3>
-          <p className="text-sm text-slate-500">
+          </h2>
+          <p className="text-sm text-ink-3">
             Enter the member's dates and current rank to check promotion
             eligibility
           </p>
         </div>
-        <div className="px-6 py-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        <div className="px-5 py-5">
+          <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2">
             <Input
-              label="Date of Rank (DOR / TIG Start) *"
+              label="Date of Rank (DOR / TIG Start)"
               type="date"
               value={form.tig_date}
               onChange={(e) => update("tig_date", e.target.value)}
               hint="The date the member was promoted to current rank"
             />
             <Input
-              label="TAFMSD (TIS Start Date) *"
+              label="TAFMSD (TIS Start Date)"
               type="date"
               value={form.tis_date}
               onChange={(e) => update("tis_date", e.target.value)}
               hint="Total Active Federal Military Service Date"
             />
             <Select
-              label="Current Rank *"
+              label="Current Rank"
               value={form.current_rank}
               onChange={(e) => update("current_rank", e.target.value)}
             >
@@ -130,7 +123,7 @@ export default function PromotionCalculator() {
               ))}
             </Select>
             <Select
-              label="Target Promotion Cycle Year *"
+              label="Target Promotion Cycle Year"
               value={form.target_year}
               onChange={(e) => update("target_year", e.target.value)}
             >
@@ -144,7 +137,7 @@ export default function PromotionCalculator() {
 
           <Button
             variant="primary"
-            className="w-full"
+            className="w-full sm:w-auto"
             disabled={!canSubmit || loading}
             loading={loading}
             onClick={submit}
@@ -153,14 +146,15 @@ export default function PromotionCalculator() {
           </Button>
 
           {error ? (
-            <div className="mt-4 flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
-              <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" /> {error}
+            <div role="alert" className="msg msg-error mt-4 flex items-start gap-2 break-words">
+              <AlertCircle aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0 text-inel" />
+              <span className="min-w-0">{error}</span>
             </div>
           ) : null}
 
           {result ? <ResultPanel result={result} currentRank={form.current_rank} /> : null}
         </div>
-      </div>
+      </section>
     </div>
   );
 }
@@ -173,36 +167,22 @@ function ResultPanel({
   currentRank: string;
 }) {
   return (
-    <div
-      className={`mt-6 rounded-xl border-2 p-5 ${
-        result.eligible
-          ? "border-green-300 bg-green-50"
-          : "border-red-300 bg-red-50"
-      }`}
-    >
-      <div className="flex items-center gap-3 mb-5">
-        {result.eligible ? (
-          <CheckCircle2 className="w-10 h-10 text-green-600" />
-        ) : (
-          <XCircle className="w-10 h-10 text-red-600" />
-        )}
-        <div>
-          <p
-            className={`text-2xl font-bold ${
-              result.eligible ? "text-green-800" : "text-red-800"
-            }`}
-          >
-            {result.eligible ? "ELIGIBLE" : "NOT ELIGIBLE"}
-          </p>
-          <p className="text-sm text-slate-600">
-            {currentRank} → {result.cycle} Promotion Cycle {result.year}
-            {" | SCOD: "}
-            {result.scod}
-          </p>
-        </div>
+    <div className="mt-6" aria-live="polite">
+      <div
+        className={`msg ${result.eligible ? "msg-ok" : "msg-error"} flex flex-wrap items-center gap-x-4 gap-y-2`}
+      >
+        <Tag tone={result.eligible ? "elig" : "inel"}>
+          {result.eligible ? "Eligible" : "Not eligible"}
+        </Tag>
+        <p className="min-w-0 text-sm text-ink-2">
+          <span className="code">{currentRank}</span> → {result.cycle} Promotion Cycle{" "}
+          <span className="num">{result.year}</span>
+          {" | SCOD: "}
+          <span className="num">{result.scod}</span>
+        </p>
       </div>
 
-      <div className="bg-white rounded-lg border border-slate-200 divide-y divide-slate-100">
+      <div className="panel mt-3 divide-y divide-line">
         <RequirementSection
           title="Time in Grade (TIG)"
           met={result.requirements.tig.met}
@@ -250,13 +230,11 @@ function ResultPanel({
       {!result.eligible &&
       result.unmet_requirements &&
       result.unmet_requirements.length > 0 ? (
-        <div className="mt-3 p-3 bg-red-100 rounded-lg">
-          <p className="text-sm font-semibold text-red-800 mb-1">
-            Reason(s) Not Eligible:
-          </p>
+        <div className="msg msg-error mt-3">
+          <p className="mb-1 font-semibold text-ink">Reason(s) Not Eligible:</p>
           <ul className="list-disc list-inside space-y-0.5">
             {result.unmet_requirements.map((r, i) => (
-              <li key={i} className="text-sm text-red-700">
+              <li key={i} className="text-sm text-ink-2">
                 {r}
               </li>
             ))}
@@ -282,11 +260,11 @@ function RequirementSection({
 }) {
   return (
     <div className="p-4">
-      <div className="flex justify-between items-center mb-2">
-        <span className="font-semibold text-slate-700">{title}</span>
+      <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+        <h3 className="text-base font-semibold text-ink">{title}</h3>
         <MetBadge met={met} label={met ? metLabel : notMetLabel} />
       </div>
-      <div className="space-y-0.5">
+      <div>
         {rows.map((r) => (
           <KvRow key={r.label} label={r.label} value={r.value} />
         ))}
@@ -298,14 +276,14 @@ function RequirementSection({
 function MetBadge({ met, label }: { met: boolean; label: string }) {
   return (
     <span
-      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold ${
-        met ? "bg-green-100 text-green-800" : "bg-red-100 text-red-700"
+      className={`inline-flex items-center gap-1.5 text-sm font-semibold ${
+        met ? "text-elig" : "text-inel"
       }`}
     >
       {met ? (
-        <CheckCircle2 className="w-3 h-3" />
+        <CheckCircle2 aria-hidden="true" className="h-4 w-4" />
       ) : (
-        <XCircle className="w-3 h-3" />
+        <XCircle aria-hidden="true" className="h-4 w-4" />
       )}
       {label}
     </span>
@@ -314,9 +292,11 @@ function MetBadge({ met, label }: { met: boolean; label: string }) {
 
 function KvRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex justify-between items-start py-1.5 border-b border-slate-100 last:border-0 text-sm">
-      <span className="text-slate-500">{label}</span>
-      <span className="font-medium text-slate-800 text-right">{value}</span>
+    <div className="flex items-start justify-between gap-4 border-b border-line py-1.5 text-sm last:border-0">
+      <span className="min-w-0 text-ink-3">{label}</span>
+      <span className="num min-w-0 text-right font-medium text-ink [overflow-wrap:anywhere]">
+        {value}
+      </span>
     </div>
   );
 }

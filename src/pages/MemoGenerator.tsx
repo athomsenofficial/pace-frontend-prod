@@ -2,7 +2,6 @@ import { useMemo, useState, type ChangeEvent } from "react";
 import {
   Plus,
   Trash2,
-  FileText,
   Download,
   ChevronRight,
   CornerDownRight,
@@ -61,6 +60,12 @@ const ALL_RANKS = [
   { group: "Enlisted", options: ENLISTED_RANKS },
   { group: "Civilian", options: CIVILIAN_RANKS },
 ];
+
+const textareaClasses =
+  "block w-full rounded-1 border border-ctrl bg-surface px-3 py-2 text-[15px] text-ink resize-y transition-colors duration-1 hover:border-ink-2 placeholder:text-ink-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-focus focus-visible:border-focus";
+
+const levelSelectClasses =
+  "h-8 max-w-full rounded-1 border border-ctrl bg-surface px-2 text-[13px] text-ink-2 hover:border-ink-2";
 
 const STATE_OPTIONS = [{ value: "", label: "Select state…" }, ...US_STATES];
 
@@ -377,28 +382,21 @@ export default function MemoGenerator() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="mb-8">
-        <div className="flex items-center gap-3 mb-1 flex-wrap">
-          <div
-            className="p-2 rounded-lg"
-            style={{ backgroundColor: "rgba(47,84,150,0.1)" }}
-          >
-            <FileText className="w-6 h-6" style={{ color: "#2F5496" }} />
-          </div>
-          <h2 className="text-3xl font-bold text-slate-900">
-            Memorandum Generator
-          </h2>
+      <header className="mb-6 border-b border-line pb-5">
+        <span className="eyebrow">Document tools</span>
+        <div className="mt-2 flex flex-wrap items-center gap-3">
+          <h1 className="page-title">Memorandum Generator</h1>
           <Badge color="navy">AFH 33-337</Badge>
         </div>
-        <p className="text-slate-500 text-sm">
+        <p className="mt-2 max-w-[64ch] text-ink-3">
           Generates a properly formatted USAF Memorandum per The Tongue and Quill
           Chapter 14 — official letterhead, floating Dept seal, T&amp;Q paragraph
           numbering, right-indented signature block.
         </p>
-      </div>
+      </header>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 space-y-6">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 lg:gap-8">
+        <div className="min-w-0 space-y-6 lg:col-span-2">
           {/* Letterhead */}
           <SectionCard
             title="Letterhead"
@@ -407,34 +405,35 @@ export default function MemoGenerator() {
             <StepHeader number={1} title="Organization & Address" />
             <div className="space-y-4">
               <Input
-                label="Organization / Unit Name *"
+                label="Organization / Unit Name"
                 placeholder="e.g., 1st Information Operations Squadron"
                 value={form.organization}
                 onChange={(e) => setField("organization", e.target.value)}
                 hint="Centered in the letterhead below 'DEPARTMENT OF THE AIR FORCE'"
               />
               <Input
-                label="Address Line 1 — Street / Unit *"
+                label="Address Line 1 — Street / Unit"
                 placeholder="e.g., 123 E Street NW, Suite 1000"
                 value={form.address_line_1}
                 onChange={(e) => setField("address_line_1", e.target.value)}
                 hint="Unit street address or box number"
               />
               <div>
-                <p className="text-sm font-medium text-slate-700 mb-1">
-                  Address Line 2 — City / State / ZIP{" "}
-                  <span className="text-red-500">*</span>
+                <p className="text-sm font-medium text-ink mb-1.5">
+                  Address Line 2 — City / State / ZIP
                 </p>
-                <div className="grid grid-cols-5 gap-2">
-                  <div className="col-span-2">
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-5">
+                  <div className="sm:col-span-2">
                     <Input
+                      aria-label="City"
                       placeholder="City"
                       value={form.address_city}
                       onChange={(e) => setField("address_city", e.target.value)}
                     />
                   </div>
-                  <div className="col-span-2">
+                  <div className="sm:col-span-2">
                     <Select
+                      aria-label="State"
                       value={form.address_state}
                       onChange={(e) =>
                         setField("address_state", e.target.value)
@@ -442,22 +441,23 @@ export default function MemoGenerator() {
                       options={STATE_OPTIONS}
                     />
                   </div>
-                  <div className="col-span-1">
+                  <div className="sm:col-span-1">
                     <Input
+                      aria-label="ZIP"
                       placeholder="ZIP"
                       value={form.address_zip}
                       onChange={(e) => setField("address_zip", e.target.value)}
                     />
                   </div>
                 </div>
-                <p className="text-xs text-slate-400 mt-1">
+                <p className="mt-1.5 text-[13px] text-ink-3">
                   Formats as "CITY STATE ZIP" per T&amp;Q — e.g., LANGLEY AFB VA
                   23665
                 </p>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <Input
-                  label="Date *"
+                  label="Date"
                   type="date"
                   value={form.date}
                   onChange={(e) => setField("date", e.target.value)}
@@ -482,7 +482,7 @@ export default function MemoGenerator() {
             <StepHeader number={2} title="FROM, Title & Subject" />
             <div className="space-y-4">
               <Input
-                label="FROM (Office Symbol) *"
+                label="FROM (Office Symbol)"
                 placeholder="e.g., 1 ISS/CC"
                 value={form.office_symbol}
                 onChange={(e) => setField("office_symbol", e.target.value)}
@@ -498,7 +498,7 @@ export default function MemoGenerator() {
               />
               {form.memo_type === "for" ? (
                 <Input
-                  label="MEMORANDUM FOR (Recipient) *"
+                  label="MEMORANDUM FOR (Recipient)"
                   placeholder="e.g., ALL ASSIGNED PERSONNEL"
                   value={form.memo_for}
                   onChange={(e) => setField("memo_for", e.target.value)}
@@ -506,7 +506,7 @@ export default function MemoGenerator() {
                 />
               ) : null}
               <Input
-                label="SUBJECT *"
+                label="SUBJECT"
                 placeholder="Brief, specific subject line"
                 value={form.subject}
                 onChange={(e) => setField("subject", e.target.value)}
@@ -527,12 +527,13 @@ export default function MemoGenerator() {
                   key={i}
                   className={`flex gap-2 items-start ${INDENT_CLASSES[p.level] ?? ""}`}
                 >
-                  <div className="pt-2 text-xs font-bold text-slate-400 w-7 shrink-0 text-right">
+                  <div className="num w-7 shrink-0 pt-2 text-right text-xs font-semibold text-ink-3">
                     {labels[i] || ""}
                   </div>
                   <div className="flex-1 space-y-1">
                     <textarea
-                      className="w-full min-h-[80px] rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 resize-y focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary placeholder:text-slate-400"
+                      aria-label={`Paragraph ${i + 1} text`}
+                      className={textareaClasses + " min-h-[80px]"}
                       placeholder={
                         p.level === 0
                           ? i === 0
@@ -546,7 +547,8 @@ export default function MemoGenerator() {
                       onChange={(e) => setParagraph(i, "text", e.target.value)}
                     />
                     <select
-                      className="text-xs rounded border border-slate-200 bg-slate-50 px-2 py-1 text-slate-600 focus:outline-none focus:ring-1 focus:ring-primary/40"
+                      aria-label="Paragraph level"
+                      className={levelSelectClasses}
                       value={String(p.level)}
                       onChange={(e) =>
                         setParagraph(i, "level", Number(e.target.value))
@@ -563,10 +565,11 @@ export default function MemoGenerator() {
                   {form.paragraphs.length > 1 ? (
                     <button
                       onClick={() => removeParagraph(i)}
-                      className="mt-2 p-1.5 rounded-md text-slate-400 hover:text-danger hover:bg-red-50 transition-colors"
+                      aria-label="Remove paragraph"
+                      className="mt-2 p-1.5 rounded-1 text-ink-3 hover:text-inel hover:bg-inel-tint transition-colors duration-1"
                       title="Remove paragraph"
                     >
-                      <Trash2 className="w-4 h-4" />
+                      <Trash2 aria-hidden="true" className="w-4 h-4" />
                     </button>
                   ) : null}
                 </div>
@@ -574,22 +577,22 @@ export default function MemoGenerator() {
               <div className="flex items-center gap-3 mt-2 flex-wrap">
                 <button
                   onClick={() => addParagraph(0)}
-                  className="flex items-center gap-1.5 text-sm text-primary font-medium hover:text-primary-dark transition-colors"
+                  className="inline-flex items-center gap-1.5 text-sm font-medium text-ink underline decoration-line-strong underline-offset-4 hover:decoration-current transition-colors duration-1"
                 >
-                  <Plus className="w-4 h-4" /> Add paragraph
+                  <Plus aria-hidden="true" className="w-4 h-4" /> Add paragraph
                 </button>
-                <span className="text-slate-300">|</span>
+                <span aria-hidden="true" className="text-line-strong">|</span>
                 <button
                   onClick={() => addParagraph(1)}
-                  className="flex items-center gap-1.5 text-sm text-slate-500 font-medium hover:text-slate-700 transition-colors"
+                  className="inline-flex items-center gap-1.5 text-sm font-medium text-ink underline decoration-line-strong underline-offset-4 hover:decoration-current transition-colors duration-1"
                 >
-                  <ChevronRight className="w-4 h-4" /> Add sub-paragraph
+                  <ChevronRight aria-hidden="true" className="w-4 h-4" /> Add sub-paragraph
                 </button>
                 <button
                   onClick={() => addParagraph(2)}
-                  className="flex items-center gap-1.5 text-sm text-slate-400 font-medium hover:text-slate-600 transition-colors"
+                  className="inline-flex items-center gap-1.5 text-sm font-medium text-ink underline decoration-line-strong underline-offset-4 hover:decoration-current transition-colors duration-1"
                 >
-                  <CornerDownRight className="w-4 h-4" /> Add sub-sub
+                  <CornerDownRight aria-hidden="true" className="w-4 h-4" /> Add sub-sub
                 </button>
               </div>
             </div>
@@ -603,14 +606,14 @@ export default function MemoGenerator() {
             <StepHeader number={4} title="Signer Information" />
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Input
-                label="Full Name *"
+                label="Full Name"
                 placeholder="e.g., John A. Smith"
                 value={form.signer_name}
                 onChange={(e) => setField("signer_name", e.target.value)}
                 hint="T&Q format: First MI Last — auto-uppercased in doc"
               />
               <Select
-                label="Rank / Grade *"
+                label="Rank / Grade"
                 value={form.signer_rank}
                 onChange={(e) => setField("signer_rank", e.target.value)}
               >
@@ -632,7 +635,7 @@ export default function MemoGenerator() {
                 options={BRANCHES}
               />
               <Input
-                label="Title / Position *"
+                label="Title / Position"
                 placeholder="e.g., Commander"
                 value={form.signer_title}
                 onChange={(e) => setField("signer_title", e.target.value)}
@@ -651,7 +654,7 @@ export default function MemoGenerator() {
             <div className="space-y-2">
               {references.map((r, i) => (
                 <div key={i} className="flex items-center gap-2">
-                  <span className="text-xs font-bold text-slate-400 w-6 shrink-0 text-right">
+                  <span className="num text-xs font-semibold text-ink-3 w-6 shrink-0 text-right">
                     ({String.fromCharCode(97 + i)})
                   </span>
                   <Input
@@ -666,18 +669,19 @@ export default function MemoGenerator() {
                   {references.length > 1 ? (
                     <button
                       onClick={() => removeReference(i)}
-                      className="p-1.5 rounded-md text-slate-400 hover:text-danger hover:bg-red-50 transition-colors shrink-0"
+                      aria-label="Remove reference"
+                      className="p-1.5 rounded-1 text-ink-3 hover:text-inel hover:bg-inel-tint transition-colors duration-1 shrink-0"
                     >
-                      <Trash2 className="w-4 h-4" />
+                      <Trash2 aria-hidden="true" className="w-4 h-4" />
                     </button>
                   ) : null}
                 </div>
               ))}
               <button
                 onClick={addReference}
-                className="flex items-center gap-1.5 text-sm text-primary font-medium hover:text-primary-dark transition-colors mt-1"
+                className="inline-flex items-center gap-1.5 text-sm font-medium text-ink underline decoration-line-strong underline-offset-4 hover:decoration-current transition-colors duration-1 mt-1"
               >
-                <Plus className="w-4 h-4" /> Add reference
+                <Plus aria-hidden="true" className="w-4 h-4" /> Add reference
               </button>
             </div>
           </ToggleSection>
@@ -694,7 +698,7 @@ export default function MemoGenerator() {
               {attachments.map((a, i) => (
                 <div key={i} className="flex items-center gap-2">
                   {attachments.length > 1 ? (
-                    <span className="text-xs font-bold text-slate-400 w-5 shrink-0 text-right">
+                    <span className="num text-xs font-semibold text-ink-3 w-5 shrink-0 text-right">
                       {i + 1}.
                     </span>
                   ) : null}
@@ -710,18 +714,19 @@ export default function MemoGenerator() {
                   {attachments.length > 1 ? (
                     <button
                       onClick={() => removeAttachment(i)}
-                      className="p-1.5 rounded-md text-slate-400 hover:text-danger hover:bg-red-50 transition-colors shrink-0"
+                      aria-label="Remove attachment"
+                      className="p-1.5 rounded-1 text-ink-3 hover:text-inel hover:bg-inel-tint transition-colors duration-1 shrink-0"
                     >
-                      <Trash2 className="w-4 h-4" />
+                      <Trash2 aria-hidden="true" className="w-4 h-4" />
                     </button>
                   ) : null}
                 </div>
               ))}
               <button
                 onClick={addAttachment}
-                className="flex items-center gap-1.5 text-sm text-primary font-medium hover:text-primary-dark transition-colors mt-1"
+                className="inline-flex items-center gap-1.5 text-sm font-medium text-ink underline decoration-line-strong underline-offset-4 hover:decoration-current transition-colors duration-1 mt-1"
               >
-                <Plus className="w-4 h-4" /> Add attachment
+                <Plus aria-hidden="true" className="w-4 h-4" /> Add attachment
               </button>
             </div>
           </ToggleSection>
@@ -744,22 +749,24 @@ export default function MemoGenerator() {
                 return (
                   <div
                     key={i}
-                    className="border border-slate-200 rounded-lg p-4 space-y-4 bg-slate-50/50"
+                    className="space-y-4 rounded-2 border border-line bg-surface-2 p-4"
                   >
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-bold text-slate-700">
+                      <span className="text-sm font-semibold text-ink">
                         {ordinal} Ind
                       </span>
                       <button
                         onClick={() => removeEndorsement(i)}
-                        className="p-1.5 rounded-md text-slate-400 hover:text-danger hover:bg-red-50 transition-colors"
+                        aria-label="Remove endorsement"
+                        className="p-1.5 rounded-1 text-ink-3 hover:text-inel hover:bg-inel-tint transition-colors duration-1"
                       >
-                        <Trash2 className="w-4 h-4" />
+                        <Trash2 aria-hidden="true" className="w-4 h-4" />
                       </button>
                     </div>
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                       <Input
                         label="Office Symbol"
+                        optional
                         placeholder="e.g., 1 FW/CC"
                         value={e.office_symbol}
                         onChange={(ev) =>
@@ -768,6 +775,7 @@ export default function MemoGenerator() {
                       />
                       <Input
                         label="Date"
+                        optional
                         type="date"
                         value={e.date}
                         onChange={(ev) =>
@@ -776,7 +784,7 @@ export default function MemoGenerator() {
                       />
                     </div>
                     <div>
-                      <p className="text-xs font-semibold text-slate-600 mb-2">
+                      <p className="mb-2 text-sm font-semibold text-ink">
                         Body Paragraphs
                       </p>
                       <div className="space-y-2">
@@ -785,12 +793,13 @@ export default function MemoGenerator() {
                             key={pi}
                             className={`flex gap-2 items-start ${INDENT_CLASSES[p.level] ?? ""}`}
                           >
-                            <div className="pt-2 text-xs font-bold text-slate-400 w-7 shrink-0 text-right">
+                            <div className="num w-7 shrink-0 pt-2 text-right text-xs font-semibold text-ink-3">
                               {eLabels[pi] || ""}
                             </div>
                             <div className="flex-1 space-y-1">
                               <textarea
-                                className="w-full min-h-[64px] rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 resize-y focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary placeholder:text-slate-400"
+                                aria-label={`Endorsement paragraph ${pi + 1} text`}
+                                className={textareaClasses + " min-h-[64px]"}
                                 placeholder="Endorsement paragraph text…"
                                 value={p.text}
                                 onChange={(ev) =>
@@ -803,7 +812,8 @@ export default function MemoGenerator() {
                                 }
                               />
                               <select
-                                className="text-xs rounded border border-slate-200 bg-slate-50 px-2 py-1 text-slate-600 focus:outline-none"
+                                aria-label="Endorsement paragraph level"
+                                className={levelSelectClasses}
                                 value={String(p.level)}
                                 onChange={(ev) =>
                                   setEndorsementParagraph(
@@ -824,9 +834,10 @@ export default function MemoGenerator() {
                             {e.paragraphs.length > 1 ? (
                               <button
                                 onClick={() => removeEndorsementParagraph(i, pi)}
-                                className="mt-2 p-1.5 rounded-md text-slate-400 hover:text-danger hover:bg-red-50 transition-colors"
+                                aria-label="Remove paragraph"
+                                className="mt-2 p-1.5 rounded-1 text-ink-3 hover:text-inel hover:bg-inel-tint transition-colors duration-1"
                               >
-                                <Trash2 className="w-4 h-4" />
+                                <Trash2 aria-hidden="true" className="w-4 h-4" />
                               </button>
                             ) : null}
                           </div>
@@ -834,27 +845,28 @@ export default function MemoGenerator() {
                         <div className="flex items-center gap-3 mt-1 flex-wrap">
                           <button
                             onClick={() => addEndorsementParagraph(i, 0)}
-                            className="flex items-center gap-1.5 text-xs text-primary font-medium hover:text-primary-dark transition-colors"
+                            className="inline-flex items-center gap-1.5 text-xs font-medium text-ink underline decoration-line-strong underline-offset-4 hover:decoration-current transition-colors duration-1"
                           >
-                            <Plus className="w-3 h-3" /> Add paragraph
+                            <Plus aria-hidden="true" className="w-3 h-3" /> Add paragraph
                           </button>
-                          <span className="text-slate-300">|</span>
+                          <span aria-hidden="true" className="text-line-strong">|</span>
                           <button
                             onClick={() => addEndorsementParagraph(i, 1)}
-                            className="flex items-center gap-1.5 text-xs text-slate-500 font-medium hover:text-slate-700 transition-colors"
+                            className="inline-flex items-center gap-1.5 text-xs font-medium text-ink underline decoration-line-strong underline-offset-4 hover:decoration-current transition-colors duration-1"
                           >
-                            <ChevronRight className="w-3 h-3" /> Sub-paragraph
+                            <ChevronRight aria-hidden="true" className="w-3 h-3" /> Sub-paragraph
                           </button>
                         </div>
                       </div>
                     </div>
                     <div>
-                      <p className="text-xs font-semibold text-slate-600 mb-2">
+                      <p className="mb-2 text-sm font-semibold text-ink">
                         Signature Block
                       </p>
-                      <div className="grid grid-cols-2 gap-3">
+                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                         <Input
                           label="Full Name"
+                          optional
                           placeholder="e.g., Jane B. Doe"
                           value={e.signer_name}
                           onChange={(ev) =>
@@ -867,6 +879,7 @@ export default function MemoGenerator() {
                         />
                         <Select
                           label="Rank / Grade"
+                          optional
                           value={e.signer_rank}
                           onChange={(ev) =>
                             setEndorsementField(
@@ -889,6 +902,7 @@ export default function MemoGenerator() {
                         </Select>
                         <Select
                           label="Branch"
+                          optional
                           value={e.signer_branch}
                           onChange={(ev) =>
                             setEndorsementField(
@@ -901,6 +915,7 @@ export default function MemoGenerator() {
                         />
                         <Input
                           label="Title / Position"
+                          optional
                           placeholder="e.g., Commander"
                           value={e.signer_title}
                           onChange={(ev) =>
@@ -914,9 +929,9 @@ export default function MemoGenerator() {
                       </div>
                     </div>
                     <div>
-                      <p className="text-xs font-semibold text-slate-600 mb-2">
+                      <p className="mb-2 text-sm font-semibold text-ink">
                         Attachments for this endorsement{" "}
-                        <span className="font-normal text-slate-400">
+                        <span className="font-normal text-ink-3">
                           (optional)
                         </span>
                       </p>
@@ -924,7 +939,7 @@ export default function MemoGenerator() {
                         {e.attachments.map((a, ai) => (
                           <div key={ai} className="flex items-center gap-2">
                             {e.attachments.length > 1 ? (
-                              <span className="text-xs font-bold text-slate-400 w-5 shrink-0 text-right">
+                              <span className="num text-xs font-semibold text-ink-3 w-5 shrink-0 text-right">
                                 {ai + 1}.
                               </span>
                             ) : null}
@@ -940,18 +955,19 @@ export default function MemoGenerator() {
                                 onClick={() =>
                                   removeEndorsementAttachment(i, ai)
                                 }
-                                className="p-1.5 rounded-md text-slate-400 hover:text-danger hover:bg-red-50 transition-colors shrink-0"
+                                aria-label="Remove attachment"
+                                className="p-1.5 rounded-1 text-ink-3 hover:text-inel hover:bg-inel-tint transition-colors duration-1 shrink-0"
                               >
-                                <Trash2 className="w-4 h-4" />
+                                <Trash2 aria-hidden="true" className="w-4 h-4" />
                               </button>
                             ) : null}
                           </div>
                         ))}
                         <button
                           onClick={() => addEndorsementAttachment(i)}
-                          className="flex items-center gap-1.5 text-xs text-primary font-medium hover:text-primary-dark transition-colors"
+                          className="inline-flex items-center gap-1.5 text-xs font-medium text-ink underline decoration-line-strong underline-offset-4 hover:decoration-current transition-colors duration-1"
                         >
-                          <Plus className="w-3 h-3" /> Add attachment
+                          <Plus aria-hidden="true" className="w-3 h-3" /> Add attachment
                         </button>
                       </div>
                     </div>
@@ -960,17 +976,17 @@ export default function MemoGenerator() {
               })}
               <button
                 onClick={addEndorsement}
-                className="flex items-center gap-1.5 text-sm text-primary font-medium hover:text-primary-dark transition-colors"
+                className="inline-flex items-center gap-1.5 text-sm font-medium text-ink underline decoration-line-strong underline-offset-4 hover:decoration-current transition-colors duration-1"
               >
-                <Plus className="w-4 h-4" /> Add endorsement
+                <Plus aria-hidden="true" className="w-4 h-4" /> Add endorsement
               </button>
             </div>
           </ToggleSection>
 
           {error ? (
-            <div className="flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
-              <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
-              {error}
+            <div role="alert" className="msg msg-error flex items-start gap-2 break-words">
+              <AlertCircle aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0 text-inel" />
+              <span className="min-w-0">{error}</span>
             </div>
           ) : null}
 
@@ -981,14 +997,14 @@ export default function MemoGenerator() {
             disabled={!canSubmit || submitting}
             loading={submitting}
             onClick={submit}
-            leftIcon={<Download className="w-5 h-5" />}
+            leftIcon={<Download aria-hidden="true" className="w-5 h-5" />}
           >
             {submitting ? "Generating Word Doc…" : "Generate & Download Word Doc"}
           </Button>
         </div>
 
         {/* Sidebar */}
-        <div className="space-y-6">
+        <div className="min-w-0 space-y-6">
           <Preview
             form={form}
             references={references}
@@ -997,7 +1013,7 @@ export default function MemoGenerator() {
             showAttachments={showAttachments}
           />
           <SidebarCard title="AFH 33-337 Ch. 14 Reference" tinted>
-            <div className="space-y-3 text-xs text-slate-600">
+            <div className="space-y-3 text-[13px] text-ink-2">
               {[
                 { label: "Font", value: "12pt Times New Roman" },
                 { label: "Margins", value: "1 inch all sides" },
@@ -1012,7 +1028,7 @@ export default function MemoGenerator() {
                   key={kv.label}
                   className="flex justify-between items-start gap-2"
                 >
-                  <span className="font-semibold text-slate-700 shrink-0">
+                  <span className="shrink-0 font-semibold text-ink">
                     {kv.label}
                   </span>
                   <span className="text-right">{kv.value}</span>
@@ -1021,7 +1037,7 @@ export default function MemoGenerator() {
             </div>
           </SidebarCard>
           <SidebarCard title="Tips">
-            <ul className="space-y-2 text-xs text-slate-600">
+            <ul className="space-y-2 text-[13px] text-ink-2">
               <li>
                 • Name format: <strong>First MI Last</strong> (e.g., John A. Smith)
               </li>
@@ -1049,24 +1065,23 @@ function SectionCard({
   children: React.ReactNode;
 }) {
   return (
-    <div className="bg-white border border-slate-200 rounded-xl shadow-sm">
-      <div className="border-b border-slate-200 px-6 py-4">
-        <h3 className="text-lg font-semibold text-slate-900">{title}</h3>
-        <p className="text-sm text-slate-500">{description}</p>
+    <section className="panel">
+      <div className="border-b border-line px-5 py-4">
+        <h2 className="text-base font-semibold text-ink">{title}</h2>
+        <p className="text-sm text-ink-3">{description}</p>
       </div>
-      <div className="px-6 py-6">{children}</div>
-    </div>
+      <div className="px-5 py-5">{children}</div>
+    </section>
   );
 }
 
 function StepHeader({ number, title }: { number: number; title: string }) {
   return (
-    <div className="flex items-center gap-3 mb-4">
-      <span className="w-7 h-7 rounded-full bg-primary text-white text-xs font-black flex items-center justify-center shrink-0">
-        {number}
-      </span>
-      <h3 className="font-bold text-slate-800">{title}</h3>
-    </div>
+    <h3 className="mb-4 flex items-baseline gap-2 text-sm font-semibold text-ink-2">
+      <span className="num text-ink-3">Step {number}</span>
+      <span aria-hidden="true" className="text-line-strong">/</span>
+      <span>{title}</span>
+    </h3>
   );
 }
 
@@ -1084,24 +1099,24 @@ function ToggleSection({
   children: React.ReactNode;
 }) {
   return (
-    <div className="bg-white border border-slate-200 rounded-xl shadow-sm">
-      <div className="border-b border-slate-200 px-6 py-4">
-        <label className="flex items-center gap-3 cursor-pointer select-none">
+    <section className="panel">
+      <div className="border-b border-line px-5 py-4">
+        <label className="flex cursor-pointer select-none flex-wrap items-center gap-3">
           <input
             type="checkbox"
             checked={checked}
             onChange={(e: ChangeEvent<HTMLInputElement>) =>
               onChange(e.target.checked)
             }
-            className="w-4 h-4 rounded accent-primary"
+            className="h-4 w-4 rounded-1 accent-primary"
           />
-          <span className="text-lg font-semibold text-slate-900">{title}</span>
-          <span className="text-xs font-normal text-slate-400">(optional)</span>
+          <span className="text-base font-semibold text-ink">{title}</span>
+          <span className="text-[13px] font-normal text-ink-3">(optional)</span>
         </label>
-        <p className="text-sm text-slate-500 mt-1">{description}</p>
+        <p className="mt-1 text-sm text-ink-3">{description}</p>
       </div>
-      {checked ? <div className="px-6 py-6">{children}</div> : null}
-    </div>
+      {checked ? <div className="px-5 py-5">{children}</div> : null}
+    </section>
   );
 }
 
@@ -1115,18 +1130,12 @@ function SidebarCard({
   children: React.ReactNode;
 }) {
   return (
-    <div
-      className={`border rounded-xl shadow-sm ${
-        tinted
-          ? "bg-primary/5 border-primary/30"
-          : "bg-white border-slate-200"
-      }`}
-    >
-      <div className="border-b border-slate-200/60 px-5 py-3">
-        <h4 className="text-sm font-bold text-slate-800">{title}</h4>
+    <section className={`panel ${tinted ? "bg-surface-2" : ""}`}>
+      <div className="border-b border-line px-5 py-3">
+        <h2 className="text-sm font-semibold text-ink">{title}</h2>
       </div>
       <div className="px-5 py-4">{children}</div>
-    </div>
+    </section>
   );
 }
 
@@ -1171,17 +1180,17 @@ function Preview({
   const atts = showAttachments ? attachments.filter((a) => a.trim()) : [];
 
   return (
-    <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
-      <div className="bg-slate-50 border-b border-slate-200 px-4 py-2 flex items-center gap-2">
-        <FileStack className="w-4 h-4 text-slate-400" />
-        <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+    <section className="panel overflow-hidden" aria-label="Memo preview">
+      <div className="flex items-center gap-2 border-b border-line bg-surface-2 px-4 py-2">
+        <FileStack aria-hidden="true" className="h-4 w-4 text-ink-3" />
+        <span className="text-xs font-semibold uppercase tracking-wider text-ink-3">
           Preview
         </span>
       </div>
-      <div className="p-6 font-mono text-[10px] leading-relaxed text-slate-700 space-y-2">
+      <div className="space-y-2 overflow-x-auto p-6 font-mono text-[10px] leading-relaxed text-ink-2 [overflow-wrap:anywhere]">
         <div className="text-center space-y-0.5">
-          <div className="w-8 h-8 rounded-full bg-slate-200 mx-auto mb-1 flex items-center justify-center">
-            <span className="text-slate-400 text-[8px] font-bold">SEAL</span>
+          <div className="mx-auto mb-1 flex h-8 w-8 items-center justify-center rounded-1 bg-surface-2 border border-line">
+            <span className="text-[8px] font-bold text-ink-3">SEAL</span>
           </div>
           <p className="font-bold text-[10px]">DEPARTMENT OF THE AIR FORCE</p>
           {form.organization ? <p>{form.organization}</p> : null}
@@ -1189,7 +1198,7 @@ function Preview({
           {addressLine2 ? <p>{addressLine2.toUpperCase()}</p> : null}
         </div>
         <div className="text-right text-[9px]">{dateStr}</div>
-        <div className="border-t border-slate-300 my-1" />
+        <div className="my-1 border-t border-line-strong" />
         <p className="font-bold text-[10px]">{memoForLine}</p>
         <div className="space-y-0.5 mt-1">
           {form.office_symbol ? (
@@ -1243,6 +1252,6 @@ function Preview({
           </div>
         ) : null}
       </div>
-    </div>
+    </section>
   );
 }

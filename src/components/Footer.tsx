@@ -1,53 +1,65 @@
 import { Link } from "react-router-dom";
+import { TOOL_GROUPS } from "@/lib/tools";
+
+const COLS = [
+  ...TOOL_GROUPS.map((g) => ({
+    title: g.navLabel,
+    links: g.tools.map((t) => ({ to: t.to, label: t.name })),
+  })),
+  {
+    title: "Help",
+    links: [
+      { to: "/rosters", label: "Roster tools" },
+      { to: "/how-to", label: "How-to guide" },
+      { to: "/features", label: "Features" },
+    ],
+  },
+];
 
 export default function Footer() {
   return (
-    <footer className="bg-navy-950 text-slate-300 mt-16">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-          <div>
-            <div className="flex items-center gap-2 mb-3">
+    <footer className="bg-navy text-navy-on-2">
+      <div className="mx-auto max-w-[1440px] px-4 py-10 sm:px-6">
+        <div className="grid grid-cols-2 gap-8 md:grid-cols-3 lg:grid-cols-6">
+          <div className="col-span-2 md:col-span-3 lg:col-span-1">
+            <div className="flex items-center gap-2.5">
               <img
                 src="/air_force_no_bg_navy.png"
-                alt="USAF"
-                className="h-8 w-auto"
+                alt=""
+                className="h-6 w-auto brightness-0 invert"
               />
-              <span className="font-brand text-2xl text-white tracking-wider">
+              <span className="font-display text-2xl font-semibold tracking-[0.06em] text-white">
                 PACE
               </span>
             </div>
-            <p className="text-sm text-slate-400">
-              Personnel & Administrative Collaboration Engine — automate USAF
-              promotion processing.
+            <p className="mt-3 max-w-xs text-sm">
+              Personnel &amp; Administrative Collaboration Engine. A suite of personnel
+              tools for Commander Support Staff and unit admin.
             </p>
           </div>
-          <div>
-            <h4 className="text-white font-semibold text-sm mb-3">MEL Tools</h4>
-            <ul className="space-y-2 text-sm">
-              <li><Link to="/initial-mel" className="hover:text-white">Initial MEL</Link></li>
-              <li><Link to="/final-mel" className="hover:text-white">Final MEL</Link></li>
-              <li><Link to="/mpf-roster" className="hover:text-white">MPF Roster</Link></li>
-            </ul>
-          </div>
-          <div>
-            <h4 className="text-white font-semibold text-sm mb-3">Calculators</h4>
-            <ul className="space-y-2 text-sm">
-              <li><Link to="/calculators/promotion" className="hover:text-white">Promotion Eligibility</Link></li>
-              <li><Link to="/calculators/btz" className="hover:text-white">BTZ Eligibility</Link></li>
-            </ul>
-          </div>
-          <div>
-            <h4 className="text-white font-semibold text-sm mb-3">Resources</h4>
-            <ul className="space-y-2 text-sm">
-              <li><Link to="/features" className="hover:text-white">Features</Link></li>
-              <li><Link to="/how-to" className="hover:text-white">How-To Guide</Link></li>
-              <li><Link to="/memo-generator" className="hover:text-white">Memorandum Generator</Link></li>
-            </ul>
-          </div>
+          {COLS.map((c) => (
+            <div key={c.title}>
+              <h2 className="mb-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-white">
+                {c.title}
+              </h2>
+              <ul className="space-y-2 text-sm">
+                {c.links.map((l) => (
+                  <li key={l.to}>
+                    <Link
+                      to={l.to}
+                      className="text-navy-on-2 underline decoration-white/25 hover:text-white hover:decoration-white"
+                    >
+                      {l.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
         </div>
-        <div className="border-t border-navy-800 mt-8 pt-6 text-xs text-slate-400 flex flex-col md:flex-row justify-between gap-2">
-          <p>© {new Date().getFullYear()} PACE System. Built for Air Force HR professionals.</p>
-          <p>For Official Use Only — handle in accordance with DoDM 5200.01.</p>
+        <div className="mt-8 flex flex-col justify-between gap-2 border-t border-white/15 pt-6 text-xs md:flex-row">
+          <p>&copy; {new Date().getFullYear()} PACE System. Built for Commander Support Staff and unit admin.</p>
+          <p>Controlled Unclassified Information when populated &mdash; handle in accordance with DoDI 5200.48.</p>
         </div>
       </div>
     </footer>

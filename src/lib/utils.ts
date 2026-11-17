@@ -89,6 +89,20 @@ export function formatDateReadable(value: string): string {
   return `${m[3]} ${MONTH_ABBR[+m[2] - 1]} ${m[1]}`;
 }
 
+/**
+ * Renders any stored date ("YYYY-MM-DD", "01-JAN-2024", "2024-Jan-01", ...) as the
+ * military DD-MMM-YYYY form (01-MAR-2024) without going through Date/toISOString,
+ * so there is no timezone shift. Returns "" for empty input and the raw value if
+ * it can't be read.
+ */
+export function formatDateMil(value: string | null | undefined): string {
+  if (value == null || String(value).trim() === "") return "";
+  const iso = parseFlexibleDate(String(value));
+  if (!iso) return String(value);
+  const [y, m, d] = iso.split("-");
+  return `${d}-${MONTH_ABBR[+m - 1].toUpperCase()}-${y}`;
+}
+
 /** Converts an ISO date "YYYY-MM-DD" to backend format "YYYY-Mmm-DD". */
 export function toBackendDate(value: string): string {
   if (!value) return "";

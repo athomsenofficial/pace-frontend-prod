@@ -18,6 +18,11 @@ export interface Member {
   disposition: Disposition;
   reason?: string | null;
   deleted?: boolean;
+  /** Reviewer moved this member to eligible ("Move to Eligible"). */
+  override?: boolean;
+  override_reason?: string | null;
+  /** Added by hand in the roster editor. */
+  manual?: boolean;
 }
 
 export interface UploadResponse {

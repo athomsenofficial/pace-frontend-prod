@@ -1,64 +1,88 @@
 /** @type {import('tailwindcss').Config} */
+
+// Every colour reads a CSS custom property from src/index.css, stored as
+// RGB channels so opacity modifiers (bg-primary/10) keep working.
+const v = (name) => `rgb(var(--${name}) / <alpha-value>)`;
+
 export default {
   content: ["./index.html", "./src/**/*.{ts,tsx}"],
   theme: {
     extend: {
       colors: {
+        ground: v("ground"),
+        surface: v("surface"),
+        "surface-2": v("surface-2"),
+        line: v("line"),
+        "line-strong": v("line-strong"),
+        ctrl: v("ctrl"),
+        silver: v("silver"),
+        ink: { DEFAULT: v("ink"), 2: v("ink-2"), 3: v("ink-3") },
         primary: {
-          DEFAULT: "#1e3a8a",
-          dark: "#172554",
-          light: "#3b5bdb",
-          50: "#eef2ff",
-          100: "#e0e7ff",
-          500: "#3b5bdb",
-          600: "#2a4ac7",
-          700: "#1e3a8a",
-          900: "#172554",
+          DEFAULT: v("primary"),
+          hover: v("primary-hover"),
+          tint: v("primary-tint"),
+          // legacy aliases kept so older class names still resolve to the theme
+          dark: v("primary-hover"),
+          light: v("primary"),
+          50: v("primary-tint"),
+          100: v("primary-tint"),
+          500: v("primary"),
+          600: v("primary"),
+          700: v("primary"),
+          900: v("primary-hover"),
         },
-        "gold-light": "#f9d067",
         navy: {
-          950: "#0a1530",
-          900: "#0f1e3d",
-          800: "#152652",
-          700: "#1c3066",
-          600: "#27407f",
-          500: "#3656a3",
+          DEFAULT: v("navy"),
+          2: v("navy-2"),
+          on: v("on-navy"),
+          "on-2": v("on-navy-2"),
+          // legacy aliases
+          950: v("navy"),
+          900: v("navy"),
+          800: v("navy-2"),
+          700: v("navy-2"),
+          600: v("primary"),
+          500: v("primary"),
         },
-        success: {
-          DEFAULT: "#16a34a",
-          dark: "#15803d",
-        },
-        warning: {
-          DEFAULT: "#d97706",
-          dark: "#b45309",
-        },
-        danger: {
-          DEFAULT: "#dc2626",
-          dark: "#b91c1c",
-        },
-        accent: {
-          DEFAULT: "#0891b2",
-          dark: "#0e7490",
-        },
-        special: {
-          DEFAULT: "#7c3aed",
-          dark: "#6d28d9",
-        },
-        gold: {
-          DEFAULT: "#f4b942",
-          light: "#f9d067",
-          dark: "#d99526",
+        gold: { DEFAULT: v("gold"), light: v("gold"), dark: v("gold") },
+        focus: v("focus"),
+        elig: { DEFAULT: v("elig"), tint: v("elig-tint") },
+        inel: { DEFAULT: v("inel"), tint: v("inel-tint") },
+        disc: { DEFAULT: v("disc"), ink: v("disc-ink"), tint: v("disc-tint") },
+        btz: { DEFAULT: v("btz"), ink: v("btz-ink"), tint: v("btz-tint") },
+        small: { DEFAULT: v("small"), ink: v("small-ink"), tint: v("small-tint") },
+        error: v("error"),
+        // Legacy semantic names remapped onto the category tokens
+        success: { DEFAULT: v("elig"), dark: v("elig"), tint: v("elig-tint") },
+        danger: { DEFAULT: v("inel"), dark: v("inel"), tint: v("inel-tint") },
+        warning: { DEFAULT: v("disc"), dark: v("disc-ink"), tint: v("disc-tint") },
+        special: { DEFAULT: v("btz"), dark: v("btz-ink") },
+        accent: { DEFAULT: v("btz"), dark: v("btz-ink") },
+        // Tailwind's slate scale remapped onto the cool neutral tokens so any
+        // remaining slate-* class follows the theme.
+        slate: {
+          50: v("ground"),
+          100: v("surface-2"),
+          200: v("line"),
+          300: v("line-strong"),
+          400: v("ctrl"),
+          500: v("ink-3"),
+          600: v("ink-3"),
+          700: v("ink-2"),
+          800: v("ink"),
+          900: v("ink"),
+          950: v("ink"),
         },
       },
       fontFamily: {
-        sans: ['"Inter"', "system-ui", "sans-serif"],
-        heading: ['"Poppins"', '"Inter"', "system-ui", "sans-serif"],
-        brand: ['"Black Ops One"', '"Poppins"', "sans-serif"],
+        sans: ['"Instrument Sans"', "ui-sans-serif", "system-ui", '"Segoe UI"', "sans-serif"],
+        display: ['"Newsreader"', '"Iowan Old Style"', "Georgia", "serif"],
+        mono: ['"IBM Plex Mono"', "ui-monospace", "Consolas", '"Courier New"', "monospace"],
       },
-      backgroundImage: {
-        "hero-gradient":
-          "linear-gradient(135deg, #0f1e3d 0%, #1c3066 50%, #27407f 100%)",
-      },
+      borderRadius: { 1: "4px", 2: "8px" },
+      boxShadow: { 1: "var(--shadow-1)" },
+      transitionDuration: { 1: "120ms" },
+      transitionTimingFunction: { out: "cubic-bezier(0.2, 0, 0, 1)" },
     },
   },
   plugins: [],

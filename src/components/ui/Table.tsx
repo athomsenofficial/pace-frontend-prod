@@ -1,17 +1,33 @@
-import type { HTMLAttributes, ReactNode } from "react";
+import type {
+  HTMLAttributes,
+  ReactNode,
+  TdHTMLAttributes,
+  ThHTMLAttributes,
+} from "react";
 import { cn } from "@/lib/utils";
 
 interface TableProps extends HTMLAttributes<HTMLTableElement> {
   children: ReactNode;
+  /** Accessible name for the scroll region (it is focusable so keyboard users can scroll it). */
+  label?: string;
+  caption?: ReactNode;
+  wrapperClassName?: string;
 }
 
-export function Table({ className, children, ...rest }: TableProps) {
+/** Table in its own scroll frame: the page never scrolls sideways, the table can. */
+export function Table({ className, children, label, caption, wrapperClassName, ...rest }: TableProps) {
   return (
-    <div className="overflow-x-auto border border-slate-200 rounded-lg">
-      <table
-        className={cn("min-w-full divide-y divide-slate-200", className)}
-        {...rest}
-      >
+    <div
+      className={cn(
+        "relative w-full overflow-x-auto rounded-2 border border-line bg-surface",
+        wrapperClassName,
+      )}
+      role={label ? "region" : undefined}
+      aria-label={label}
+      tabIndex={label ? 0 : undefined}
+    >
+      <table className={cn("w-full border-collapse text-sm", className)} {...rest}>
+        {caption ? <caption className="vh">{caption}</caption> : null}
         {children}
       </table>
     </div>
@@ -19,63 +35,59 @@ export function Table({ className, children, ...rest }: TableProps) {
 }
 
 export function THead({ children }: { children: ReactNode }) {
-  return <thead className="bg-slate-50">{children}</thead>;
+  return <thead>{children}</thead>;
 }
 
 export function TBody({ children }: { children: ReactNode }) {
-  return (
-    <tbody className="divide-y divide-slate-200 bg-white">{children}</tbody>
-  );
+  return <tbody className="[&>tr:last-child>td]:border-b-0">{children}</tbody>;
 }
 
-export function TR({
-  children,
-  className,
-  onClick,
-}: {
+interface TRProps extends HTMLAttributes<HTMLTableRowElement> {
   children: ReactNode;
-  className?: string;
-  onClick?: () => void;
-}) {
+}
+
+export function TR({ children, className, onClick, ...rest }: TRProps) {
   return (
     <tr
-      className={cn(onClick && "hover:bg-slate-50 cursor-pointer", className)}
+      className={cn(onClick && "cursor-pointer hover:bg-ground", className)}
       onClick={onClick}
+      {...rest}
     >
       {children}
     </tr>
   );
 }
 
-export function TH({
-  children,
-  className,
-}: {
-  children: ReactNode;
-  className?: string;
-}) {
+interface THProps extends ThHTMLAttributes<HTMLTableCellElement> {
+  children?: ReactNode;
+}
+
+export function TH({ children, className, scope = "col", ...rest }: THProps) {
   return (
     <th
-      scope="col"
+      scope={scope}
       className={cn(
-        "px-4 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-slate-600",
+        "sticky top-0 whitespace-nowrap border-b border-line bg-surface-2 px-2.5 py-2.5 text-left",
+        "text-[11.5px] font-semibold uppercase tracking-[0.08em] text-ink-2",
         className,
       )}
+      {...rest}
     >
       {children}
     </th>
   );
 }
 
-export function TD({
-  children,
-  className,
-}: {
-  children: ReactNode;
-  className?: string;
-}) {
+interface TDProps extends TdHTMLAttributes<HTMLTableCellElement> {
+  children?: ReactNode;
+}
+
+export function TD({ children, className, ...rest }: TDProps) {
   return (
-    <td className={cn("px-4 py-2.5 text-sm text-slate-700", className)}>
+    <td
+      className={cn("border-b border-line px-2.5 py-2 align-middle text-ink-2", className)}
+      {...rest}
+    >
       {children}
     </td>
   );

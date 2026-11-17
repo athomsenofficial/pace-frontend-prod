@@ -11,6 +11,11 @@ import type {
   MfrRequest,
   MpfFormat,
 } from "@/types";
+import type {
+  RunsListResponse,
+  RunResult,
+  RunRequest,
+} from "@/features/rosters/types";
 
 const baseURL = import.meta.env.VITE_API_URL || "https://tapi.businessbydrew.cloud";
 
@@ -92,4 +97,97 @@ export const api = {
       `/api/calculators/btz-eligibility`,
       payload,
     ),
+
+  /* ---- Roster runs (retention + BTZ). Each run takes its own upload: the
+     file is sent with every run and export, processed in memory on the
+     server and not kept. Called on /api/v1 directly. */
+
+  listRosterRuns: (params: { as_of_date?: string } = {}) =>
+    apiClient.get<RunsListResponse>(`/api/v1/rosters/runs`, { params }),
+
+  processRun: (runId: string, file: File, body: RunRequest) =>
+    apiClient.post<RunResult>(
+      `/api/v1/rosters/runs/${encodeURIComponent(runId)}/process`,
+      runForm(file, body),
+      { headers: { "Content-Type": "multipart/form-data" } },
+    ),
+
+  exportRun: (
+    runId: string,
+    format: "pdf" | "xlsx",
+    file: File,
+    body: RunRequest,
+  ): Promise<AxiosResponse<Blob>> =>
+    apiClient.post(`/api/v1/rosters/runs/${encodeURIComponent(runId)}/process/export`, runForm(file, body), {
+      params: { format },
+      responseType: "blob",
+      headers: { "Content-Type": "multipart/form-data" },
+    }),
 };
+
+/** multipart body for a roster run: file, as_of_date, params (JSON), pascodes (JSON array). */
+function runForm(file: File, body: RunRequest): FormData {
+  const fd = new FormData();
+  fd.append("file", file);
+  if (body.as_of_date) fd.append("as_of_date", body.as_of_date);
+  if (body.params && Object.keys(body.params).length) fd.append("params", JSON.stringify(body.params));
+  if (body.pascodes && body.pascodes.length) fd.append("pascodes", JSON.stringify(body.pascodes));
+  return fd;
+}
+
+/** Reads the filename from a Content-Disposition header (exposed by the API's CORS config). */
+export function filenameFromDisposition(header: unknown, fallback: string): string {
+  if (typeof header !== "string") return fallback;
+  const star = /filename\*\s*=\s*(?:UTF-8'')?([^;]+)/i.exec(header);
+  if (star) {
+    try {
+      return decodeURIComponent(star[1].trim().replace(/^"|"$/g, ""));
+    } catch {
+      /* fall through */
+    }
+  }
+  const plain = /filename\s*=\s*"?([^";]+)"?/i.exec(header);
+  return plain ? plain[1].trim() : fallback;
+}
+
+export interface ApiProblem {
+  status?: number;
+  message: string;
+  missingColumns: string[];
+  invalidParams: string[];
+}
+
+/**
+ * Turns an axios error into one readable message plus the backend's
+ * {error, missing_columns, invalid_params} lists. Handles FastAPI's {detail}
+ * too, and JSON error bodies that arrive as a Blob on file downloads.
+ */
+export async function parseApiError(e: unknown, fallback: string): Promise<ApiProblem> {
+  const err = e as { response?: { status?: number; data?: unknown }; message?: string };
+  let data = err?.response?.data;
+  if (data instanceof Blob) {
+    try {
+      data = JSON.parse(await data.text());
+    } catch {
+      data = null;
+    }
+  }
+  const out: ApiProblem = {
+    status: err?.response?.status,
+    message: fallback,
+    missingColumns: [],
+    invalidParams: [],
+  };
+  if (data && typeof data === "object") {
+    const d = data as Record<string, unknown>;
+    const strings = (v: unknown) =>
+      Array.isArray(v) ? v.filter((x): x is string => typeof x === "string") : [];
+    out.missingColumns = strings(d.missing_columns);
+    out.invalidParams = strings(d.invalid_params);
+    if (typeof d.error === "string") out.message = d.error;
+    else if (typeof d.detail === "string") out.message = d.detail;
+  } else if (!err?.response && err?.message) {
+    out.message = `Couldn't reach the PACE server (${err.message}).`;
+  }
+  return out;
+}

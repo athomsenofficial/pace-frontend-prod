@@ -1,45 +1,47 @@
-import { forwardRef, type InputHTMLAttributes } from "react";
+import { forwardRef, useId, type InputHTMLAttributes, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
+import { FieldLabel, FieldMessage, controlClasses } from "./Field";
 
 interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
-  label?: string;
+  label?: ReactNode;
   error?: string;
-  hint?: string;
+  hint?: ReactNode;
+  /** Shows "Optional" (or the given text) after the label. */
+  optional?: boolean | string;
+  /** Shows a quiet "Edited" marker after the label. */
+  edited?: boolean;
+  /** Set codes (PAS, AFSC, SRID, RE/UIF) in IBM Plex Mono. */
+  mono?: boolean;
+  wrapperClassName?: string;
 }
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
-  { label, error, hint, className, id, ...rest },
+  { label, error, hint, optional, edited, mono, className, wrapperClassName, id, ...rest },
   ref,
 ) {
-  const inputId =
-    id ?? (label ? `input-${label.toLowerCase().replace(/\s+/g, "-")}` : undefined);
+  const auto = useId();
+  const inputId = id ?? `in-${auto}`;
+  const msgId = error || hint ? `${inputId}-msg` : undefined;
   return (
-    <div className="w-full">
+    <div className={cn("w-full min-w-0", wrapperClassName)}>
       {label ? (
-        <label
-          htmlFor={inputId}
-          className="block text-sm font-medium text-slate-700 mb-1"
-        >
+        <FieldLabel htmlFor={inputId} optional={optional} edited={edited}>
           {label}
-        </label>
+        </FieldLabel>
       ) : null}
       <input
         ref={ref}
         id={inputId}
+        aria-invalid={error ? true : undefined}
+        aria-describedby={msgId}
         className={cn(
-          "w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm",
-          "placeholder:text-slate-400",
-          "focus:outline-none focus:ring-2 focus:ring-navy-500 focus:border-transparent",
-          "disabled:bg-slate-50 disabled:text-slate-500",
-          error && "border-red-500 focus:ring-red-500",
+          controlClasses,
+          mono && "font-mono text-[14px] tracking-[0.02em]",
           className,
         )}
         {...rest}
       />
-      {error ? <p className="text-xs text-red-600 mt-1">{error}</p> : null}
-      {!error && hint ? (
-        <p className="text-xs text-slate-500 mt-1">{hint}</p>
-      ) : null}
+      <FieldMessage id={msgId} error={error} hint={hint} />
     </div>
   );
 });

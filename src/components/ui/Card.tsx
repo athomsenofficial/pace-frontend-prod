@@ -5,11 +5,20 @@ interface CardProps extends HTMLAttributes<HTMLDivElement> {
   children: ReactNode;
 }
 
+/** Panel: white surface, 1px hairline, 8px radius, no shadow. */
 export function Card({ className, children, ...rest }: CardProps) {
+  return (
+    <div className={cn("panel", className)} {...rest}>
+      {children}
+    </div>
+  );
+}
+
+export function CardHeader({ className, children, ...rest }: CardProps) {
   return (
     <div
       className={cn(
-        "bg-white rounded-lg border border-slate-200 shadow-sm",
+        "px-5 py-4 border-b border-line [&_h2]:text-base [&_h2]:font-semibold [&_h3]:text-base [&_h3]:font-semibold",
         className,
       )}
       {...rest}
@@ -19,20 +28,9 @@ export function Card({ className, children, ...rest }: CardProps) {
   );
 }
 
-export function CardHeader({ className, children, ...rest }: CardProps) {
-  return (
-    <div
-      className={cn("px-6 py-4 border-b border-slate-200", className)}
-      {...rest}
-    >
-      {children}
-    </div>
-  );
-}
-
 export function CardBody({ className, children, ...rest }: CardProps) {
   return (
-    <div className={cn("px-6 py-4", className)} {...rest}>
+    <div className={cn("px-5 py-5", className)} {...rest}>
       {children}
     </div>
   );
@@ -40,10 +38,7 @@ export function CardBody({ className, children, ...rest }: CardProps) {
 
 export function CardFooter({ className, children, ...rest }: CardProps) {
   return (
-    <div
-      className={cn("px-6 py-4 border-t border-slate-200 bg-slate-50", className)}
-      {...rest}
-    >
+    <div className={cn("px-5 py-4 border-t border-line", className)} {...rest}>
       {children}
     </div>
   );

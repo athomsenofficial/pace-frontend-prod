@@ -1,193 +1,176 @@
-import { useState, useRef, useEffect } from "react";
-import { NavLink, Link } from "react-router-dom";
-import { ChevronDown, Menu, X, Wrench, Calculator, FileText, Compass, BookOpen, LayoutDashboard } from "lucide-react";
+import { useEffect, useId, useRef, useState } from "react";
+import { Link, NavLink, useLocation } from "react-router-dom";
+import { Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { TOOL_GROUPS } from "@/lib/tools";
 
-interface DropdownItem {
-  to: string;
+interface MenuGroup {
   label: string;
-  description?: string;
-  icon?: typeof Wrench;
+  items: Array<{ to: string; label: string }>;
 }
 
-interface NavItem {
-  to?: string;
-  label: string;
-  icon?: typeof LayoutDashboard;
-  items?: DropdownItem[];
-}
-
-const NAV: NavItem[] = [
-  { to: "/", label: "Dashboard", icon: LayoutDashboard },
-  { to: "/features", label: "Features", icon: Compass },
+const MENU: MenuGroup[] = [
+  { label: "Start", items: [{ to: "/", label: "Home" }, { to: "/rosters", label: "Roster tools" }] },
+  ...TOOL_GROUPS.map((g) => ({
+    label: g.navLabel,
+    items: g.tools.map((t) => ({ to: t.to, label: t.name })),
+  })),
   {
-    label: "MEL Tools",
-    icon: Wrench,
+    label: "Help",
     items: [
-      { to: "/initial-mel", label: "Initial MEL", description: "Generate initial promotion eligibility list", icon: FileText },
-      { to: "/final-mel", label: "Final MEL", description: "Generate interactive final MEL with NRN/P/MP/PN", icon: FileText },
-      { to: "/mpf-roster", label: "MPF Roster", description: "Generate MPF distribution lists by PAS code", icon: FileText },
+      { to: "/how-to", label: "How to use" },
+      { to: "/features", label: "Features" },
     ],
   },
-  {
-    label: "Calculators",
-    icon: Calculator,
-    items: [
-      { to: "/calculators/promotion", label: "Promotion Eligibility", description: "Check eligibility for a single member", icon: Calculator },
-      { to: "/calculators/btz", label: "BTZ Eligibility", description: "Check Below-the-Zone eligibility", icon: Calculator },
-    ],
-  },
-  { to: "/memo-generator", label: "Memorandum", icon: FileText },
-  { to: "/how-to", label: "How To", icon: BookOpen },
 ];
 
+const FOCUSABLE =
+  'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
+/**
+ * Top bar: wordmark on the left, one "Menu" button on the far right. The menu
+ * is a dialog panel that slides in from the right edge at every width (full
+ * width on phones). Esc, the close button and the scrim close it; focus moves
+ * in on open, is trapped while open and returns to the Menu button on close.
+ */
 export default function Navigation() {
-  const [openMenu, setOpenMenu] = useState<string | null>(null);
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
+  const [open, setOpen] = useState(false);
+  const { pathname } = useLocation();
+  const btnRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const closeRef = useRef<HTMLButtonElement>(null);
+  const titleId = useId();
+  const panelId = "site-menu";
+
+  // Close when the route changes (a link was followed).
+  useEffect(() => setOpen(false), [pathname]);
 
   useEffect(() => {
-    function onClick(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
-        setOpenMenu(null);
+    if (!open) return;
+    const btn = btnRef.current;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const t = window.setTimeout(() => closeRef.current?.focus(), 0);
+
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        setOpen(false);
+        return;
       }
-    }
-    document.addEventListener("mousedown", onClick);
-    return () => document.removeEventListener("mousedown", onClick);
-  }, []);
+      if (e.key !== "Tab" || !panelRef.current) return;
+      const nodes = Array.from(panelRef.current.querySelectorAll<HTMLElement>(FOCUSABLE));
+      if (!nodes.length) return;
+      const first = nodes[0];
+      const last = nodes[nodes.length - 1];
+      const active = document.activeElement;
+      if (e.shiftKey && (active === first || !panelRef.current.contains(active))) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && (active === last || !panelRef.current.contains(active))) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
+    document.addEventListener("keydown", onKey, true);
+    return () => {
+      window.clearTimeout(t);
+      document.removeEventListener("keydown", onKey, true);
+      document.body.style.overflow = prevOverflow;
+      btn?.focus();
+    };
+  }, [open]);
 
   return (
-    <header className="bg-white border-b border-slate-200 sticky top-0 z-40">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="flex h-16 items-center justify-between">
-          <Link to="/" className="flex items-center gap-2">
-            <img
-              src="/air_force_no_bg_navy.png"
-              alt="USAF"
-              className="h-8 w-auto"
-            />
-            <span className="font-brand text-2xl text-navy-900 tracking-wider">
-              PACE
-            </span>
-          </Link>
+    <header className="bg-navy text-white">
+      <div className="mx-auto flex h-14 max-w-[1440px] items-center gap-4 px-4 sm:px-6">
+        <Link
+          to="/"
+          className="flex min-w-0 items-center gap-2.5 text-white no-underline"
+          aria-label="PACE home"
+        >
+          <img src="/air_force_no_bg_navy.png" alt="" className="h-6 w-auto brightness-0 invert" />
+          <span className="font-display text-2xl font-semibold leading-none tracking-[0.06em]">PACE</span>
+        </Link>
 
-          <nav
-            ref={ref}
-            className="hidden md:flex items-center gap-1"
-            aria-label="Primary"
-          >
-            {NAV.map((item) => {
-              if (item.items) {
-                const isOpen = openMenu === item.label;
-                return (
-                  <div key={item.label} className="relative">
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setOpenMenu(isOpen ? null : item.label)
-                      }
-                      className={cn(
-                        "inline-flex items-center gap-1 px-3 py-2 rounded-md text-sm font-medium",
-                        isOpen
-                          ? "bg-slate-100 text-navy-900"
-                          : "text-slate-700 hover:text-navy-900 hover:bg-slate-50",
-                      )}
-                    >
-                      {item.icon ? <item.icon className="h-4 w-4" /> : null}
-                      {item.label}
-                      <ChevronDown
-                        className={cn(
-                          "h-4 w-4 transition-transform",
-                          isOpen && "rotate-180",
-                        )}
-                      />
-                    </button>
-                    {isOpen ? (
-                      <div className="absolute left-0 mt-2 w-72 bg-white border border-slate-200 rounded-lg shadow-lg py-2">
-                        {item.items.map((sub) => (
-                          <Link
-                            key={sub.to}
-                            to={sub.to}
-                            onClick={() => setOpenMenu(null)}
-                            className="block px-4 py-2 hover:bg-slate-50"
-                          >
-                            <div className="flex items-center gap-2 text-sm font-medium text-navy-900">
-                              {sub.icon ? (
-                                <sub.icon className="h-4 w-4 text-navy-700" />
-                              ) : null}
-                              {sub.label}
-                            </div>
-                            {sub.description ? (
-                              <div className="text-xs text-slate-500 mt-0.5 pl-6">
-                                {sub.description}
-                              </div>
-                            ) : null}
-                          </Link>
-                        ))}
-                      </div>
-                    ) : null}
-                  </div>
-                );
-              }
-              return (
-                <NavLink
-                  key={item.to}
-                  to={item.to!}
-                  end={item.to === "/"}
-                  className={({ isActive }) =>
-                    cn(
-                      "inline-flex items-center gap-1 px-3 py-2 rounded-md text-sm font-medium",
-                      isActive
-                        ? "bg-slate-100 text-navy-900"
-                        : "text-slate-700 hover:text-navy-900 hover:bg-slate-50",
-                    )
-                  }
-                >
-                  {item.icon ? <item.icon className="h-4 w-4" /> : null}
-                  {item.label}
-                </NavLink>
-              );
-            })}
-          </nav>
-
-          <button
-            type="button"
-            className="md:hidden text-slate-700"
-            onClick={() => setMobileOpen((o) => !o)}
-            aria-label="Toggle menu"
-          >
-            {mobileOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-          </button>
-        </div>
-
-        {mobileOpen ? (
-          <div className="md:hidden pb-4 space-y-2">
-            {NAV.flatMap((item) =>
-              item.items
-                ? item.items.map((sub) => (
-                    <Link
-                      key={sub.to}
-                      to={sub.to}
-                      onClick={() => setMobileOpen(false)}
-                      className="block px-3 py-2 rounded-md text-sm font-medium text-slate-700 hover:bg-slate-100"
-                    >
-                      {sub.label}
-                    </Link>
-                  ))
-                : [
-                    <Link
-                      key={item.to}
-                      to={item.to!}
-                      onClick={() => setMobileOpen(false)}
-                      className="block px-3 py-2 rounded-md text-sm font-medium text-slate-700 hover:bg-slate-100"
-                    >
-                      {item.label}
-                    </Link>,
-                  ],
-            )}
-          </div>
-        ) : null}
+        <button
+          ref={btnRef}
+          type="button"
+          onClick={() => setOpen(true)}
+          aria-expanded={open}
+          aria-controls={panelId}
+          aria-haspopup="dialog"
+          className="ml-auto inline-flex h-9 shrink-0 items-center gap-2 rounded-1 border border-white/40 px-3 text-sm text-white transition-colors duration-1 hover:border-white"
+        >
+          <Menu className="h-4 w-4" aria-hidden="true" />
+          Menu
+        </button>
       </div>
+
+      {open ? (
+        <div className="fixed inset-0 z-50">
+          <div
+            aria-hidden="true"
+            className="absolute inset-0 bg-[rgb(var(--scrim)/0.55)]"
+            onMouseDown={() => setOpen(false)}
+          />
+          <div
+            ref={panelRef}
+            id={panelId}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby={titleId}
+            className="drawer-in absolute inset-y-0 right-0 flex w-full flex-col border-l border-line bg-surface text-ink-2 shadow-1 sm:w-[340px]"
+          >
+            <div className="flex h-14 shrink-0 items-center justify-between gap-3 bg-navy px-4 text-white sm:px-5">
+              <h2 id={titleId} className="text-base font-semibold text-white">
+                Menu
+              </h2>
+              <button
+                ref={closeRef}
+                type="button"
+                onClick={() => setOpen(false)}
+                className="inline-flex h-9 items-center gap-1.5 rounded-1 border border-white/40 px-3 text-sm text-white hover:border-white"
+              >
+                <X className="h-4 w-4" aria-hidden="true" />
+                Close
+              </button>
+            </div>
+            <nav aria-label="Primary" className="flex-1 overflow-y-auto px-3 py-4 sm:px-4">
+              <ul className="grid gap-5">
+                {MENU.map((group) => (
+                  <li key={group.label}>
+                    <p className="px-2 pb-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-ink-3">
+                      {group.label}
+                    </p>
+                    <ul className="grid gap-0.5">
+                      {group.items.map((it) => (
+                        <li key={it.to}>
+                          <NavLink
+                            to={it.to}
+                            end
+                            onClick={() => setOpen(false)}
+                            className={({ isActive }) =>
+                              cn(
+                                "relative block rounded-1 px-3 py-2 text-[15px] no-underline transition-colors duration-1",
+                                isActive
+                                  ? "bg-ground font-medium text-ink before:absolute before:inset-y-1.5 before:left-0 before:w-[3px] before:bg-gold"
+                                  : "text-ink-2 hover:bg-ground hover:text-ink",
+                              )
+                            }
+                          >
+                            {it.label}
+                          </NavLink>
+                        </li>
+                      ))}
+                    </ul>
+                  </li>
+                ))}
+              </ul>
+            </nav>
+          </div>
+        </div>
+      ) : null}
     </header>
   );
 }

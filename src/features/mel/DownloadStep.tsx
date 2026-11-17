@@ -1,14 +1,15 @@
-import { useEffect, useState } from "react";
-import { CheckCircle2, Download, RotateCcw } from "lucide-react";
-import { Card, CardBody } from "@/components/ui/Card";
+import { useEffect, useState, type ReactNode } from "react";
+import { Download, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { downloadBlob } from "@/lib/utils";
+import { ActionBar, PageHeader } from "./WizardShell";
 
 interface DownloadStepProps {
   blob: Blob | null;
   sessionId: string;
   documentLabel: string;
   filenamePrefix: string;
+  meta?: ReactNode;
   onStartOver: () => void;
 }
 
@@ -17,13 +18,15 @@ export function DownloadStep({
   sessionId,
   documentLabel,
   filenamePrefix,
+  meta,
   onStartOver,
 }: DownloadStepProps) {
   const [downloaded, setDownloaded] = useState(false);
+  const filename = `${filenamePrefix}_${sessionId}.pdf`;
 
   const download = () => {
     if (!blob) return;
-    downloadBlob(blob, `${filenamePrefix}_${sessionId}.pdf`);
+    downloadBlob(blob, filename);
     setDownloaded(true);
   };
 
@@ -35,40 +38,32 @@ export function DownloadStep({
   }, [blob]);
 
   return (
-    <Card>
-      <CardBody className="pt-6">
-        <div className="text-center space-y-6">
-          <div className="p-4 bg-success/10 border border-success rounded-lg">
-            <div className="flex items-center justify-center gap-3 mb-2">
-              <CheckCircle2 className="w-6 h-6 text-success" />
-              <h3 className="text-xl font-semibold text-success-dark">
-                PDF Generated Successfully!
-              </h3>
-            </div>
-            <p className="text-sm text-slate-700">
-              Your {documentLabel} has been generated and is ready to download.
-            </p>
-          </div>
-          <div className="flex gap-4 justify-end">
-            <Button
-              variant="outline"
-              size="lg"
-              leftIcon={<RotateCcw className="w-5 h-5" />}
-              onClick={onStartOver}
-            >
-              Process New Roster
-            </Button>
-            <Button
-              size="lg"
-              leftIcon={<Download className="w-5 h-5" />}
-              onClick={download}
-              disabled={!blob}
-            >
-              Download PDF
-            </Button>
-          </div>
-        </div>
-      </CardBody>
-    </Card>
+    <>
+      <PageHeader
+        meta={meta}
+        title="Download the PDF"
+        description="The document is CUI-marked. Store and send it the way your unit handles CUI."
+      />
+      <div role="status" className="msg msg-ok mt-6 max-w-2xl">
+        <b>Your {documentLabel} is ready.</b>{" "}
+        {downloaded
+          ? "The download started. If it didn't, use Download PDF below."
+          : "Use Download PDF below to save it."}
+        <div className="mt-2 font-mono text-[12.5px] text-ink-3 [overflow-wrap:anywhere]">{filename}</div>
+      </div>
+      <div className="flex-1" />
+      <ActionBar
+        back={
+          <Button variant="tertiary" leftIcon={<RotateCcw />} onClick={onStartOver}>
+            Process a new roster
+          </Button>
+        }
+        primary={
+          <Button leftIcon={<Download />} onClick={download} disabled={!blob}>
+            {downloaded ? "Download again" : "Download PDF"}
+          </Button>
+        }
+      />
+    </>
   );
 }

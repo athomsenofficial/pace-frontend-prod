@@ -1,40 +1,51 @@
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
-type BadgeColor =
-  | "neutral"
-  | "navy"
-  | "green"
-  | "red"
-  | "amber"
-  | "blue"
-  | "teal";
+/**
+ * Badge: 20px square caps label (e.g. OVERRIDE, ADDED). For a member's category
+ * use <Tag> (dot pill), the only round shape in the system.
+ */
+type BadgeColor = "neutral" | "navy" | "primary" | "green" | "red" | "amber" | "blue" | "teal";
+
+const badgeColor: Record<BadgeColor, string> = {
+  neutral: "border-ink-3 text-ink-2",
+  navy: "border-primary text-primary",
+  primary: "border-primary text-primary",
+  blue: "border-primary text-primary",
+  green: "border-elig text-elig",
+  red: "border-inel text-inel",
+  amber: "border-disc text-disc-ink",
+  teal: "border-btz text-btz-ink",
+};
 
 interface BadgeProps {
   children: ReactNode;
   color?: BadgeColor;
   className?: string;
+  title?: string;
 }
 
-const colorClasses: Record<BadgeColor, string> = {
-  neutral: "bg-slate-100 text-slate-700",
-  navy: "bg-navy-100 text-navy-900 bg-navy-900/10",
-  green: "bg-emerald-100 text-emerald-800",
-  red: "bg-red-100 text-red-800",
-  amber: "bg-amber-100 text-amber-800",
-  blue: "bg-blue-100 text-blue-800",
-  teal: "bg-cyan-100 text-cyan-800",
-};
-
-export function Badge({ children, color = "neutral", className }: BadgeProps) {
+export function Badge({ children, color = "neutral", className, title }: BadgeProps) {
   return (
-    <span
-      className={cn(
-        "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium",
-        colorClasses[color],
-        className,
-      )}
-    >
+    <span className={cn("badge", badgeColor[color], className)} title={title}>
+      {children}
+    </span>
+  );
+}
+
+export type TagTone = "elig" | "inel" | "disc" | "btz" | "small" | "primary" | "neutral";
+
+export function Tag({
+  tone = "neutral",
+  children,
+  className,
+}: {
+  tone?: TagTone;
+  children: ReactNode;
+  className?: string;
+}) {
+  return (
+    <span className={cn("tag", tone !== "neutral" && `t-${tone}`, className)}>
       {children}
     </span>
   );
