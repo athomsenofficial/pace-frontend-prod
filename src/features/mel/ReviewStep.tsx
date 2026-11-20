@@ -5,6 +5,7 @@ import {
   Plus,
   Upload as UploadIcon,
   RefreshCw,
+  ArrowLeft,
   ArrowRight,
   AlertCircle,
   CheckCircle2,
@@ -12,18 +13,26 @@ import {
   AlertTriangle,
   Crown,
   Users,
+  Search,
+  ImageIcon,
 } from "lucide-react";
-import { Card, CardBody } from "@/components/ui/Card";
+import { Card, CardBody, CardHeader, CardFooter } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { Table, THead, TBody, TR, TH, TD } from "@/components/ui/Table";
 import { Input } from "@/components/ui/Input";
+import { Select } from "@/components/ui/Select";
+import { Tabs } from "@/components/ui/Tabs";
+import { Stat } from "@/components/ui/Stat";
+import { Alert } from "@/components/ui/Alert";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { Spinner } from "@/components/ui/Spinner";
 import { EditMemberModal } from "./EditMemberModal";
 import { AddMemberModal } from "./AddMemberModal";
 import { DeleteConfirmDialog } from "./DeleteConfirmDialog";
 import { LogoUploadModal } from "./LogoUploadModal";
 import { apiClient } from "@/lib/api";
-import { cn, formatDate } from "@/lib/utils";
+import { formatDate } from "@/lib/utils";
 import type { Member } from "@/types";
 
 interface Statistics {
@@ -63,17 +72,21 @@ interface ReviewStepProps {
 
 type CategoryKey = "eligible" | "ineligible" | "discrepancy" | "btz" | "small_unit";
 
+type CategoryColor = "green" | "red" | "amber" | "violet" | "navy";
+type StatTone = "success" | "danger" | "warning" | "violet" | "primary";
+
 const CATEGORIES: Array<{
   key: CategoryKey;
   label: string;
-  color: "green" | "red" | "amber" | "teal" | "neutral";
+  color: CategoryColor;
+  tone: StatTone;
   icon: React.ReactNode;
 }> = [
-  { key: "eligible", label: "Eligible", color: "green", icon: <CheckCircle2 className="w-5 h-5" /> },
-  { key: "ineligible", label: "Ineligible", color: "red", icon: <XCircle className="w-5 h-5" /> },
-  { key: "discrepancy", label: "Discrepancy", color: "amber", icon: <AlertTriangle className="w-5 h-5" /> },
-  { key: "btz", label: "BTZ", color: "teal", icon: <Crown className="w-5 h-5" /> },
-  { key: "small_unit", label: "Small Unit", color: "neutral", icon: <Users className="w-5 h-5" /> },
+  { key: "eligible", label: "Eligible", color: "green", tone: "success", icon: <CheckCircle2 /> },
+  { key: "ineligible", label: "Ineligible", color: "red", tone: "danger", icon: <XCircle /> },
+  { key: "discrepancy", label: "Discrepancy", color: "amber", tone: "warning", icon: <AlertTriangle /> },
+  { key: "btz", label: "BTZ", color: "violet", tone: "violet", icon: <Crown /> },
+  { key: "small_unit", label: "Small Unit", color: "navy", tone: "primary", icon: <Users /> },
 ];
 
 const PAGE_SIZE_OPTIONS = [10, 25, 50, 100];
@@ -312,244 +325,224 @@ export function ReviewStep({
     }
   };
 
+  const statValue = (key: CategoryKey): number =>
+    key === "small_unit"
+      ? data.categories?.small_unit?.length ?? 0
+      : (stats as Record<string, number | undefined>)[key] ?? 0;
+
   return (
     <Card>
-      <CardBody className="pt-6">
-        <div className="mb-6 flex flex-wrap justify-between items-center gap-3">
-          <div>
-            <h2 className="text-2xl font-bold text-slate-900">
-              Roster Review - {data.cycle ?? "—"} {data.year ?? ""}
-            </h2>
-            <p className="text-sm text-slate-500">
-              Session: {sessionData.session_id}
-            </p>
-          </div>
-          {showLogo ? (
-            <div className="flex flex-col items-end gap-3">
+      <CardHeader
+        title={`Roster review — ${data.cycle ?? "—"} ${data.year ?? ""}`}
+        description={
+          <>
+            Check each category, fix any discrepancies, then continue.{" "}
+            <span className="whitespace-nowrap font-mono text-xs text-fg-subtle">
+              Session {sessionData.session_id}
+            </span>
+          </>
+        }
+        actions={
+          showLogo ? (
+            <>
               {data.custom_logo?.uploaded ? (
-                <div className="flex items-center gap-2 px-3 py-2 bg-slate-50 rounded-lg border border-slate-200">
-                  <span className="text-sm text-slate-600">
-                    <span className="font-semibold">Logo:</span>{" "}
-                    {data.custom_logo.filename}
-                  </span>
-                </div>
+                <span className="inline-flex max-w-[14rem] items-center gap-1.5 truncate rounded-md border border-line bg-surface-muted px-2.5 py-1 text-xs text-fg-muted">
+                  <ImageIcon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                  <span className="truncate">{data.custom_logo.filename}</span>
+                </span>
               ) : null}
               <Button
-                variant="primary"
-                size="md"
-                leftIcon={<UploadIcon className="w-5 h-5" />}
+                variant="outline"
+                size="sm"
+                leftIcon={<UploadIcon className="h-4 w-4" />}
                 onClick={() => setLogoOpen(true)}
-                className="bg-success hover:bg-success-dark text-white border-success font-semibold px-6"
               >
-                {data.custom_logo?.uploaded ? "Replace Image" : "Upload Logo"}
+                {data.custom_logo?.uploaded ? "Replace logo" : "Upload unit logo"}
               </Button>
-            </div>
-          ) : null}
+            </>
+          ) : null
+        }
+      />
+
+      <CardBody className="space-y-5">
+        {/* Statistics — click a tile to jump to that category */}
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+          {CATEGORIES.map((c) => (
+            <Stat
+              key={c.key}
+              label={c.label}
+              value={statValue(c.key)}
+              icon={c.icon}
+              tone={c.tone}
+              active={activeTab === c.key}
+              onClick={() => setActiveTab(c.key)}
+            />
+          ))}
+          <Stat label="Errors" value={stats.errors ?? 0} icon={<AlertCircle />} tone="neutral" />
         </div>
 
-        {/* Statistics grid */}
-        <div className="mb-6 p-6 bg-slate-50 border border-slate-200 rounded-lg">
-          <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
-            <StatTile
-              icon={<CheckCircle2 className="w-6 h-6 text-success" />}
-              bg="bg-success/20 border-success/50"
-              value={stats.eligible ?? 0}
-              label="Eligible"
-            />
-            <StatTile
-              icon={<XCircle className="w-6 h-6 text-danger" />}
-              bg="bg-danger/20 border-danger/50"
-              value={stats.ineligible ?? 0}
-              label="Ineligible"
-            />
-            <StatTile
-              icon={<AlertTriangle className="w-6 h-6 text-warning" />}
-              bg="bg-warning/20 border-warning/50"
-              value={stats.discrepancy ?? 0}
-              label="Discrepancy"
-            />
-            <StatTile
-              icon={<Crown className="w-6 h-6 text-special" />}
-              bg="bg-special/20 border-special/50"
-              value={stats.btz ?? 0}
-              label="BTZ"
-            />
-            <StatTile
-              icon={<Users className="w-6 h-6 text-primary" />}
-              bg="bg-primary/20 border-primary/50"
-              value={data.categories?.small_unit?.length ?? 0}
-              label="Small Unit"
-            />
-            <StatTile
-              icon={<AlertCircle className="w-6 h-6 text-slate-500" />}
-              bg="bg-slate-200 border-slate-300"
-              value={stats.errors ?? 0}
-              label="Errors"
-            />
-          </div>
-        </div>
-
-        {/* Category tabs */}
-        <div className="mb-4 border-b border-slate-200">
-          <nav className="flex flex-wrap gap-2">
-            {CATEGORIES.map((c) => {
-              const count = data.categories?.[c.key]?.length ?? 0;
-              const active = activeTab === c.key;
-              return (
-                <button
-                  key={c.key}
-                  type="button"
-                  onClick={() => setActiveTab(c.key)}
-                  className={cn(
-                    "px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors flex items-center gap-2",
-                    active
-                      ? "border-primary text-primary"
-                      : "border-transparent text-slate-500 hover:text-slate-700",
-                  )}
-                >
-                  {c.label}
-                  <span
-                    className={cn(
-                      "inline-flex items-center rounded-full px-2 py-0.5 text-xs",
-                      active ? "bg-primary text-white" : "bg-slate-100 text-slate-700",
-                    )}
-                  >
-                    {count}
-                  </span>
-                </button>
-              );
-            })}
-          </nav>
-        </div>
+        <Tabs
+          ariaLabel="Eligibility categories"
+          items={CATEGORIES.map((c) => ({
+            value: c.key,
+            label: c.label,
+            count: data.categories?.[c.key]?.length ?? 0,
+          }))}
+          value={activeTab}
+          onChange={(v) => setActiveTab(v as CategoryKey)}
+        />
 
         {/* Filter row */}
-        <div className="mb-4 flex flex-wrap items-center gap-3">
-          <Input
-            placeholder="Search by name or PASCODE…"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="max-w-xs"
-          />
-          {pasOptions.length > 1 ? (
-            <select
-              value={pasFilter}
-              onChange={(e) => setPasFilter(e.target.value)}
-              className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm"
-            >
-              <option value="all">All PASCODEs</option>
-              {pasOptions.map((p) => (
-                <option key={p} value={p}>
-                  {p}
-                </option>
-              ))}
-            </select>
-          ) : null}
-          <div className="ml-auto flex gap-2">
+        <div className="flex flex-col gap-3 md:flex-row md:items-end">
+          <div className="flex flex-1 flex-col gap-3 sm:flex-row">
+            <div className="sm:w-72">
+              <Input
+                leadingIcon={<Search />}
+                aria-label="Search members"
+                placeholder="Search name or PASCODE…"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </div>
+            {pasOptions.length > 1 ? (
+              <Select
+                aria-label="Filter by PASCODE"
+                value={pasFilter}
+                onChange={(e) => setPasFilter(e.target.value)}
+                containerClassName="sm:w-48"
+              >
+                <option value="all">All PASCODEs</option>
+                {pasOptions.map((p) => (
+                  <option key={p} value={p}>
+                    {p}
+                  </option>
+                ))}
+              </Select>
+            ) : null}
+          </div>
+          <div className="flex gap-2">
             <Button
               variant="outline"
-              size="sm"
               onClick={handleReprocess}
               loading={reprocessing}
-              leftIcon={<RefreshCw className="w-4 h-4" />}
+              leftIcon={<RefreshCw className="h-4 w-4" />}
             >
               Re-process
             </Button>
             <Button
-              variant="primary"
-              size="sm"
+              variant="secondary"
               onClick={() => setAdding(true)}
-              leftIcon={<Plus className="w-4 h-4" />}
+              leftIcon={<Plus className="h-4 w-4" />}
             >
-              Add Member
+              Add member
             </Button>
           </div>
         </div>
 
         {error ? (
-          <div className="mb-3 flex items-start gap-2 p-3 bg-danger/10 border border-danger rounded-lg text-danger text-sm">
-            <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
+          <Alert tone="danger" onDismiss={() => setError(null)}>
             {error}
-          </div>
+          </Alert>
         ) : null}
 
-        {loading && pageItems.length === 0 ? (
-          <div className="py-12 text-center text-slate-500 text-sm">
-            Loading roster…
-          </div>
-        ) : (
-          <Table>
-            <THead>
+        <Table maxHeight="60vh" dense zebra>
+          <THead>
+            <TR>
+              <TH>Name</TH>
+              <TH>Grade</TH>
+              <TH>DAFSC</TH>
+              <TH>DOR</TH>
+              <TH>PAS</TH>
+              <TH>Status / reason</TH>
+              <TH align="right">
+                <span className="sr-only">Actions</span>
+              </TH>
+            </TR>
+          </THead>
+          <TBody>
+            {loading && pageItems.length === 0 ? (
               <TR>
-                <TH>Name</TH>
-                <TH>Grade</TH>
-                <TH>DAFSC</TH>
-                <TH>DOR</TH>
-                <TH>PAS</TH>
-                <TH>Status / Reason</TH>
-                <TH className="text-right">Actions</TH>
+                <TD colSpan={7}>
+                  <div className="flex items-center justify-center gap-2 py-10 text-fg-muted">
+                    <Spinner />
+                    Loading roster…
+                  </div>
+                </TD>
               </TR>
-            </THead>
-            <TBody>
-              {pageItems.map((m, i) => (
+            ) : pageItems.length === 0 ? (
+              <TR>
+                <TD colSpan={7}>
+                  <EmptyState
+                    compact
+                    icon={<Users />}
+                    title={
+                      search || pasFilter !== "all"
+                        ? "No members match your filters"
+                        : "No members in this category"
+                    }
+                    description={
+                      search || pasFilter !== "all"
+                        ? "Try a different name or PASCODE."
+                        : undefined
+                    }
+                  />
+                </TD>
+              </TR>
+            ) : (
+              pageItems.map((m, i) => (
                 <TR key={m.member_id ?? `${m.FULL_NAME}-${i}`}>
-                  <TD className="font-medium text-slate-900">{m.FULL_NAME}</TD>
-                  <TD>{m.GRADE}</TD>
-                  <TD className="font-mono text-xs">{m.DAFSC ?? "—"}</TD>
-                  <TD>{formatDate(m.DOR)}</TD>
-                  <TD className="font-mono text-xs">{m.ASSIGNED_PAS}</TD>
-                  <TD>
-                    <Badge color={badgeColor(activeTab)}>
-                      {categoryToLabel(activeTab)}
-                    </Badge>
+                  <TD className="whitespace-nowrap font-medium">{m.FULL_NAME}</TD>
+                  <TD className="whitespace-nowrap">{m.GRADE}</TD>
+                  <TD className="whitespace-nowrap font-mono text-xs">{m.DAFSC ?? "—"}</TD>
+                  <TD className="whitespace-nowrap tabular-nums">{formatDate(m.DOR)}</TD>
+                  <TD className="whitespace-nowrap font-mono text-xs">{m.ASSIGNED_PAS}</TD>
+                  <TD className="min-w-[14rem]">
+                    <Badge color={badgeColor(activeTab)}>{categoryToLabel(activeTab)}</Badge>
                     {m.reason ? (
-                      <p className="text-xs text-slate-500 mt-1">{m.reason}</p>
+                      <p className="mt-1 text-xs leading-4 text-fg-muted">{m.reason}</p>
                     ) : null}
                   </TD>
-                  <TD className="text-right">
-                    <div className="inline-flex gap-1">
+                  <TD align="right" className="whitespace-nowrap">
+                    <div className="inline-flex gap-0.5">
                       <button
                         type="button"
                         onClick={() => setEditing(m)}
-                        className="p-1 rounded text-primary hover:bg-slate-100"
-                        aria-label="Edit"
+                        className="rounded-md p-1.5 text-fg-subtle transition-colors hover:bg-surface-hover hover:text-primary-text"
+                        aria-label={`Edit ${m.FULL_NAME}`}
+                        title="Edit"
                       >
                         <Pencil className="h-4 w-4" />
                       </button>
                       <button
                         type="button"
                         onClick={() => setDeleting(m)}
-                        className="p-1 rounded text-danger hover:bg-red-50"
-                        aria-label="Delete"
+                        className="rounded-md p-1.5 text-fg-subtle transition-colors hover:bg-danger-soft hover:text-danger"
+                        aria-label={`Delete ${m.FULL_NAME}`}
+                        title="Delete"
                       >
                         <Trash2 className="h-4 w-4" />
                       </button>
                     </div>
                   </TD>
                 </TR>
-              ))}
-              {pageItems.length === 0 ? (
-                <TR>
-                  <TD className="text-center text-slate-500 py-8">
-                    No members in this category.
-                  </TD>
-                </TR>
-              ) : null}
-            </TBody>
-          </Table>
-        )}
+              ))
+            )}
+          </TBody>
+        </Table>
 
-        <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <p className="text-xs text-slate-500">
-              Page {page + 1} of {totalPages} — {filtered.length} member
-              {filtered.length === 1 ? "" : "s"}
-            </p>
-            <label className="flex items-center gap-1 text-xs text-slate-500">
-              Per page:
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-fg-muted">
+            <span className="tabular-nums">
+              {filtered.length === 0
+                ? "0 members"
+                : `${page * pageSize + 1}–${Math.min((page + 1) * pageSize, filtered.length)} of ${filtered.length} member${filtered.length === 1 ? "" : "s"}`}
+            </span>
+            <label className="flex items-center gap-1.5">
+              Rows per page
               <select
                 value={pageSize}
                 onChange={(e) => setPageSize(Number(e.target.value))}
-                className="rounded-md border border-slate-300 bg-white px-2 py-1 text-xs"
+                className="h-7 rounded-md border border-line-strong/60 bg-surface px-1.5 text-xs text-fg"
               >
                 {PAGE_SIZE_OPTIONS.map((n) => (
                   <option key={n} value={n}>
@@ -559,7 +552,10 @@ export function ReviewStep({
               </select>
             </label>
           </div>
-          <div className="flex gap-2">
+          <div className="flex items-center gap-2">
+            <span className="text-xs tabular-nums text-fg-subtle">
+              Page {page + 1} of {totalPages}
+            </span>
             <Button
               variant="outline"
               size="sm"
@@ -578,25 +574,23 @@ export function ReviewStep({
             </Button>
           </div>
         </div>
-
-        <div className="flex justify-between items-center mt-6 pt-6 border-t">
-          {onBack ? (
-            <Button variant="outline" onClick={onBack}>
-              Back
-            </Button>
-          ) : (
-            <span />
-          )}
-          <Button
-            variant="primary"
-            size="lg"
-            onClick={() => onContinue(data)}
-            rightIcon={<ArrowRight className="w-4 h-4" />}
-          >
-            Continue to Force Distributor
-          </Button>
-        </div>
       </CardBody>
+
+      <CardFooter className="flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-between">
+        {onBack ? (
+          <Button variant="ghost" onClick={onBack} leftIcon={<ArrowLeft className="h-4 w-4" />}>
+            Back to upload
+          </Button>
+        ) : (
+          <span />
+        )}
+        <Button
+          onClick={() => onContinue(data)}
+          rightIcon={<ArrowRight className="h-4 w-4" />}
+        >
+          Continue to Force Distributor
+        </Button>
+      </CardFooter>
 
       <EditMemberModal
         open={!!editing}
@@ -626,32 +620,8 @@ export function ReviewStep({
   );
 }
 
-function StatTile({
-  icon,
-  bg,
-  value,
-  label,
-}: {
-  icon: React.ReactNode;
-  bg: string;
-  value: number;
-  label: string;
-}) {
-  return (
-    <div className="flex flex-col items-center gap-2 text-center">
-      <div className={cn("p-3 rounded-full border-2", bg)}>{icon}</div>
-      <div className="text-3xl font-bold text-slate-800">{value}</div>
-      <div className="text-xs font-medium text-slate-600">{label}</div>
-    </div>
-  );
-}
-
-function badgeColor(
-  cat: CategoryKey,
-): "green" | "red" | "amber" | "teal" | "neutral" {
-  return (
-    CATEGORIES.find((c) => c.key === cat)?.color ?? "neutral"
-  );
+function badgeColor(cat: CategoryKey): CategoryColor {
+  return CATEGORIES.find((c) => c.key === cat)?.color ?? "navy";
 }
 
 function categoryToLabel(cat: CategoryKey): string {

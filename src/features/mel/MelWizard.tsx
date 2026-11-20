@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { Badge } from "@/components/ui/Badge";
+import { Page } from "@/components/Page";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { StepIndicator } from "./StepIndicator";
 import { UploadStep, type CycleOption } from "./UploadStep";
 import { ReviewStep } from "./ReviewStep";
@@ -56,21 +58,27 @@ export function MelWizard({
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="mb-8">
-        <div className="flex items-center space-x-3 flex-wrap gap-y-2">
-          <h2 className="text-3xl font-bold text-slate-900">{title}</h2>
-          <Badge color="navy">
-            Step {step + 1} of {STEPS.length}
-          </Badge>
-        </div>
-      </div>
+    <Page>
+      <PageHeader
+        eyebrow="Promotions"
+        title={title}
+        badge={
+          session ? (
+            <Badge color="navy">
+              {session.cycle} · {session.year}
+            </Badge>
+          ) : null
+        }
+        description={
+          step === 0
+            ? "Upload a roster, review eligibility determinations, add unit leadership, then download the PDF."
+            : undefined
+        }
+      />
 
-      <div className="mb-8">
-        <StepIndicator steps={STEPS} current={step} />
-      </div>
+      <StepIndicator steps={STEPS} current={step} />
 
-      <div className="min-h-[400px]">
+      <div>
         {step === 0 ? (
           <UploadStep
             type={type}
@@ -120,6 +128,6 @@ export function MelWizard({
           />
         ) : null}
       </div>
-    </div>
+    </Page>
   );
 }

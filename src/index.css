@@ -2,42 +2,185 @@
 @tailwind components;
 @tailwind utilities;
 
+/*
+ * PACE design tokens.
+ * Values are space-separated RGB channels so Tailwind can apply opacity
+ * (e.g. bg-primary/10). Contrast targets: text tokens >= 4.5:1 on surface and
+ * canvas; line-strong (form-control borders) >= 3:1 on surface.
+ */
 @layer base {
+  :root {
+    color-scheme: light;
+
+    --canvas: 245 247 250;
+    --surface: 255 255 255;
+    --surface-muted: 248 250 252;
+    --surface-hover: 239 243 248;
+    --line: 226 232 240;
+    --line-strong: 130 143 165;
+
+    --fg: 15 23 42;
+    --fg-muted: 71 85 105;
+    --fg-subtle: 94 108 132;
+
+    --primary: 30 58 138;
+    --primary-hover: 23 45 110;
+    --primary-fg: 255 255 255;
+    --primary-soft: 234 240 252;
+    --primary-text: 30 64 160;
+    --focus: 37 99 235;
+
+    --success: 21 128 61;
+    --success-soft: 236 253 243;
+    --success-line: 167 230 190;
+    --success-solid: 21 128 61;
+
+    --warning: 180 83 9;
+    --warning-soft: 255 248 235;
+    --warning-line: 250 214 140;
+    --warning-solid: 180 83 9;
+
+    --danger: 185 28 28;
+    --danger-soft: 254 242 242;
+    --danger-line: 252 196 196;
+    --danger-solid: 196 30 30;
+
+    --info: 3 105 161;
+    --info-soft: 239 248 255;
+    --info-line: 179 222 250;
+    --info-solid: 3 105 161;
+
+    --violet: 109 40 217;
+    --violet-soft: 245 242 255;
+    --violet-line: 214 204 250;
+    --violet-solid: 109 40 217;
+
+    --sidebar: 15 30 61;
+    --sidebar-fg: 241 245 249;
+    --sidebar-muted: 160 174 204;
+    --sidebar-hover: 25 44 84;
+    --sidebar-active: 36 60 112;
+    --sidebar-line: 31 48 86;
+  }
+
+  .dark {
+    color-scheme: dark;
+
+    --canvas: 10 15 28;
+    --surface: 17 24 41;
+    --surface-muted: 22 31 51;
+    --surface-hover: 28 39 63;
+    --line: 36 48 74;
+    --line-strong: 100 114 140;
+
+    --fg: 229 234 242;
+    --fg-muted: 170 181 200;
+    --fg-subtle: 138 151 175;
+
+    --primary: 59 100 200;
+    --primary-hover: 75 116 214;
+    --primary-fg: 255 255 255;
+    --primary-soft: 28 42 80;
+    --primary-text: 147 177 245;
+    --focus: 96 165 250;
+
+    --success: 74 222 128;
+    --success-soft: 18 46 32;
+    --success-line: 32 85 55;
+    --success-solid: 22 128 61;
+
+    --warning: 251 191 36;
+    --warning-soft: 50 36 12;
+    --warning-line: 95 68 20;
+    --warning-solid: 180 83 9;
+
+    --danger: 248 113 113;
+    --danger-soft: 56 20 24;
+    --danger-line: 105 36 42;
+    --danger-solid: 200 38 38;
+
+    --info: 56 189 248;
+    --info-soft: 12 40 60;
+    --info-line: 25 75 105;
+    --info-solid: 3 105 161;
+
+    --violet: 167 139 250;
+    --violet-soft: 38 28 70;
+    --violet-line: 70 52 130;
+    --violet-solid: 109 40 217;
+
+    --sidebar: 8 12 24;
+    --sidebar-fg: 229 234 242;
+    --sidebar-muted: 150 162 186;
+    --sidebar-hover: 20 28 48;
+    --sidebar-active: 32 46 80;
+    --sidebar-line: 26 36 58;
+  }
+
   html {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
   }
 
   body {
-    @apply bg-slate-50 text-slate-900 font-sans;
+    @apply bg-canvas text-fg font-sans text-sm antialiased;
+    font-feature-settings: "cv11", "ss01";
   }
 
   h1,
   h2,
   h3,
   h4 {
-    @apply font-heading;
+    @apply text-fg;
+    letter-spacing: -0.011em;
+  }
+
+  ::selection {
+    background: rgb(var(--focus) / 0.25);
+  }
+
+  /* One consistent, clearly visible focus indicator for keyboard users. */
+  :focus-visible {
+    outline: 2px solid rgb(var(--focus));
+    outline-offset: 2px;
+  }
+
+  input,
+  select,
+  textarea {
+    @apply text-fg;
+  }
+
+  /* Native date-picker icon readable in dark mode. */
+  .dark input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(0.8);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
   }
 }
 
 @layer components {
-  .hero-watermark {
-    @apply absolute right-8 top-1/2 -translate-y-1/2 font-brand select-none pointer-events-none;
-    color: rgba(255, 255, 255, 0.04);
-    font-size: clamp(8rem, 18vw, 16rem);
-    letter-spacing: 0.1em;
-    line-height: 1;
+  /* Thin, theme-aware scrollbars for scroll containers (tables, sidebar). */
+  .scroll-thin {
+    scrollbar-width: thin;
+    scrollbar-color: rgb(var(--line-strong) / 0.6) transparent;
   }
 
-  .stat-strip {
-    @apply bg-navy-950 text-white;
+  .eyebrow {
+    @apply text-2xs font-semibold uppercase tracking-[0.08em] text-fg-subtle;
   }
 
-  .nav-link {
-    @apply text-slate-700 hover:text-navy-900 font-medium transition-colors;
-  }
-
-  .nav-link-active {
-    @apply text-navy-900 bg-slate-100 px-3 py-1.5 rounded-md;
+  .link {
+    @apply font-medium text-primary-text underline-offset-2 hover:underline;
   }
 }

@@ -1,7 +1,10 @@
 import { Link } from "react-router-dom";
-import { AlertTriangle, BookOpen, ChevronRight } from "lucide-react";
-import { Card, CardBody, CardHeader } from "@/components/ui/Card";
+import { ArrowRight, BookOpen } from "lucide-react";
+import { Card, CardBody, CardFooter, CardHeader } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
+import { Alert } from "@/components/ui/Alert";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { Page } from "@/components/Page";
 
 interface Guide {
   to: string;
@@ -84,6 +87,20 @@ const GUIDES: Guide[] = [
     ],
   },
   {
+    to: "/rosters",
+    title: "Run a roster report",
+    badge: "New",
+    intro:
+      "Roster reports answer recurring CSS questions — DEROS and assignment retainability, DOS windows, HYT, UIF dispositions and time on station — from a single upload.",
+    steps: [
+      "Open Roster reports from the Rosters menu.",
+      "Upload your roster file once; PACE shows which reports your columns support.",
+      "Pick a report and fill in its parameters (required ones are marked).",
+      "Optionally set an as-of date, then click Run report.",
+      "Review the results and any warnings, then export to PDF or Excel.",
+    ],
+  },
+  {
     to: "/memo-generator",
     title: "Generate an AFH 33-337 Memorandum",
     intro:
@@ -111,96 +128,87 @@ const TIPS = [
 
 export default function HowTo() {
   return (
-    <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-10 space-y-8">
-      <div className="flex items-start gap-3">
-        <div className="h-10 w-10 rounded-lg bg-primary text-white flex items-center justify-center shrink-0">
-          <BookOpen className="h-5 w-5" />
-        </div>
-        <div>
-          <h1 className="text-3xl font-bold text-slate-900">How-To Guide</h1>
-          <p className="text-slate-600 mt-1">
-            Step-by-step guide to processing Master Eligibility Lists.
-          </p>
-        </div>
-      </div>
+    <Page>
+      <PageHeader
+        eyebrow="Help"
+        icon={<BookOpen />}
+        title="How-to guide"
+        description="Step-by-step instructions for processing Master Eligibility Lists and using every PACE tool."
+      />
 
-      <Card className="border-warning/30 bg-warning/5">
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <AlertTriangle className="h-5 w-5 text-warning" />
-            <h2 className="text-lg font-semibold text-slate-900">
-              Before you upload
-            </h2>
-          </div>
-        </CardHeader>
-        <CardBody>
-          <ul className="space-y-2">
-            {TIPS.map((t) => (
-              <li key={t} className="flex items-start gap-2 text-sm text-slate-700">
-                <ChevronRight className="h-4 w-4 text-warning shrink-0 mt-0.5" />
-                <span>{t}</span>
-              </li>
-            ))}
-          </ul>
-        </CardBody>
-      </Card>
+      <Alert tone="warning" title="Before you upload">
+        <ul className="mt-1 grid grid-cols-1 gap-x-6 gap-y-1 md:grid-cols-2">
+          {TIPS.map((t) => (
+            <li key={t} className="flex gap-2">
+              <span className="mt-[7px] h-1 w-1 shrink-0 rounded-full bg-warning" aria-hidden="true" />
+              <span>{t}</span>
+            </li>
+          ))}
+        </ul>
+      </Alert>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         {GUIDES.map((g) => (
-          <Card key={g.to}>
-            <CardBody className="space-y-3">
-              <div className="flex items-start justify-between gap-3">
-                <h2 className="text-lg font-semibold text-slate-900">
-                  {g.title}
-                </h2>
-                {g.badge ? <Badge color="navy">{g.badge}</Badge> : null}
-              </div>
-              <p className="text-sm text-slate-600">{g.intro}</p>
-              <ol className="list-decimal list-inside space-y-1.5 text-sm text-slate-700">
-                {g.steps.map((s, i) => (
-                  <li key={i}>{s}</li>
+          <Card key={g.to} className="flex flex-col">
+            <CardHeader
+              title={g.title}
+              description={g.intro}
+              actions={g.badge ? <Badge color={g.badge === "New" ? "amber" : "navy"}>{g.badge}</Badge> : null}
+            />
+            <CardBody className="flex-1">
+              <ol className="space-y-2">
+                {g.steps.map((step, i) => (
+                  <li key={i} className="flex gap-3 text-[13px] leading-5 text-fg">
+                    <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-surface-hover text-[11px] font-semibold tabular-nums text-fg-muted">
+                      {i + 1}
+                    </span>
+                    <span className="pt-px">{step}</span>
+                  </li>
                 ))}
               </ol>
-              <Link
-                to={g.to}
-                className="inline-block text-sm font-medium text-primary hover:underline"
-              >
-                Open tool →
-              </Link>
             </CardBody>
+            <CardFooter className="py-2.5">
+              <Link to={g.to} className="link inline-flex items-center gap-1 text-[13px]">
+                Open tool
+                <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+              </Link>
+            </CardFooter>
           </Card>
         ))}
       </div>
 
       <Card>
+        <CardHeader title="Reference documents" />
         <CardBody>
-          <h2 className="text-lg font-semibold text-slate-900 mb-3">
-            Reference documents
-          </h2>
-          <ul className="space-y-3 text-sm">
-            <li>
-              <span className="font-semibold">DAFI 36-2502.</span> Governs WAPS
-              promotion eligibility, TIG/TIS requirements, HYT limits, and board
-              procedures.
-            </li>
-            <li>
-              <span className="font-semibold">HYT &amp; Reenlistment.</span> HYT
-              limits and reenlistment eligibility rules referenced for TIS cap
-              calculations.
-            </li>
-            <li>
-              <span className="font-semibold">CUI Marking Standards.</span>{" "}
-              Controlled Unclassified Information marking standards applied to
-              all MEL PDF outputs.
-            </li>
-            <li>
-              <span className="font-semibold">AFH 33-337.</span> Official
-              correspondence formatting standard used for MFR layout, margins,
-              fonts, and signature blocks.
-            </li>
-          </ul>
+          <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            {REFERENCES.map((r) => (
+              <div key={r.pub}>
+                <dt className="text-[13px] font-semibold text-fg">{r.pub}</dt>
+                <dd className="mt-0.5 text-[13px] leading-5 text-fg-muted">{r.desc}</dd>
+              </div>
+            ))}
+          </dl>
         </CardBody>
       </Card>
-    </div>
+    </Page>
   );
 }
+
+const REFERENCES = [
+  {
+    pub: "DAFI 36-2502",
+    desc: "Governs WAPS promotion eligibility, TIG/TIS requirements, HYT limits, and board procedures.",
+  },
+  {
+    pub: "HYT & Reenlistment",
+    desc: "HYT limits and reenlistment eligibility rules referenced for TIS cap calculations.",
+  },
+  {
+    pub: "CUI Marking Standards",
+    desc: "Controlled Unclassified Information marking standards applied to all MEL PDF outputs.",
+  },
+  {
+    pub: "AFH 33-337",
+    desc: "Official correspondence formatting standard used for MFR layout, margins, fonts, and signature blocks.",
+  },
+];

@@ -9,6 +9,7 @@ import MpfRoster from "@/pages/MpfRoster";
 import MemoGenerator from "@/pages/MemoGenerator";
 import PromotionCalculator from "@/pages/PromotionCalculator";
 import BtzCalculator from "@/pages/BtzCalculator";
+import Rosters from "@/pages/Rosters";
 
 export default function App() {
   return (
@@ -24,6 +25,7 @@ export default function App() {
         <Route path="/calculators" element={<Navigate to="/calculators/promotion" replace />} />
         <Route path="/calculators/promotion" element={<PromotionCalculator />} />
         <Route path="/calculators/btz" element={<BtzCalculator />} />
+        <Route path="/rosters" element={<Rosters />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>

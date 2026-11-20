@@ -184,3 +184,69 @@ export interface MfrRequest {
 }
 
 export type MpfFormat = "list" | "mel" | "both";
+
+/* ----------------------------- Rosters (v1) ----------------------------- */
+
+export interface RosterUploadResponse {
+  session_id: string;
+  row_count: number;
+  columns_found: string[];
+  unmapped_columns: string[];
+}
+
+export type RosterParamType = "int" | "date" | "enum";
+
+export interface RosterParam {
+  name: string;
+  label: string;
+  type: RosterParamType;
+  /** null means the value must be entered by the user. */
+  default: number | string | null;
+  unit?: string;
+  help?: string;
+  citation?: string | null;
+  options?: string[];
+}
+
+export interface RosterDefinition {
+  id: string;
+  title: string;
+  description: string;
+  required_columns: string[];
+  optional_columns: string[];
+  params: RosterParam[];
+  available?: boolean;
+  missing_columns?: string[];
+}
+
+export type RosterParamValues = Record<string, number | string | null>;
+
+export interface RosterRunRequest {
+  session_id: string;
+  params: RosterParamValues;
+  as_of_date?: string;
+}
+
+export interface RosterColumn {
+  key: string;
+  label: string;
+}
+
+export type RosterCell = string | number | null;
+
+export interface RosterRunResult {
+  roster_id: string;
+  title: string;
+  as_of: string;
+  count: number;
+  columns: RosterColumn[];
+  rows: Record<string, RosterCell>[];
+  warnings: string[];
+  missing_columns: string[];
+}
+
+export type RosterExportFormat = "pdf" | "xlsx";
+
+export interface RosterExportRequest extends RosterRunRequest {
+  format: RosterExportFormat;
+}

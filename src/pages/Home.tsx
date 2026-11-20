@@ -1,605 +1,262 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import {
-  ArrowRight,
-  BookOpen,
-  ClipboardCheck,
-  FileCheck2,
-  Calculator,
-  Clock,
-  Layers,
-  ShieldCheck,
-  Sparkles,
-  Users,
-  Building2,
-  UserCheck,
-  Briefcase,
-  FileText,
-  CheckCircle2,
-  Award,
-  Lock,
-  Compass,
-  Flag,
-} from "lucide-react";
+import { ArrowRight, ArrowUpRight, ClipboardCheck, ListChecks } from "lucide-react";
+import { Page } from "@/components/Page";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { Alert } from "@/components/ui/Alert";
+import { Badge } from "@/components/ui/Badge";
+import { Card, CardBody, CardHeader } from "@/components/ui/Card";
+import { NAV_GROUPS, type NavItem } from "@/components/layout/nav";
+import { api } from "@/lib/api";
 
-export default function Home() {
-  return (
-    <div>
-      <Hero />
-      <StatStrip />
-      <Tools />
-      <PolicySection />
-      <Audiences />
-      <Workflow />
-      <CtaFooter />
-    </div>
-  );
-}
+// Balanced two-column launcher: 4 tools per column.
+const LEFT_GROUPS = ["Promotions", "Documents"];
+const RIGHT_GROUPS = ["Rosters", "Calculators"];
+const HELP_GROUP = NAV_GROUPS.find((g) => g.label === "Help");
 
-/* ---------- Hero ---------- */
-
-function Hero() {
-  return (
-    <div className="relative bg-gradient-to-br from-primary-dark via-primary to-primary-light overflow-hidden">
-      <div
-        className="absolute inset-0 opacity-10"
-        style={{
-          backgroundImage:
-            "linear-gradient(rgba(255,255,255,0.15) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.15) 1px, transparent 1px)",
-          backgroundSize: "40px 40px",
-        }}
-      />
-      <div className="absolute right-0 top-0 bottom-0 hidden md:flex items-center pr-12 pointer-events-none select-none">
-        <span className="text-[12rem] font-black text-white/5 leading-none">
-          PACE
-        </span>
-      </div>
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
-        <div className="max-w-2xl">
-          <div className="inline-flex items-center gap-2 bg-white/10 border border-white/20 rounded-full px-4 py-1.5 mb-6">
-            <ShieldCheck className="w-3.5 h-3.5 text-gold" />
-            <span className="text-white/90 text-xs font-semibold uppercase tracking-widest">
-              Department of the Air Force
-            </span>
-          </div>
-          <h1 className="text-5xl sm:text-6xl font-black text-white leading-tight mb-4">
-            Personnel &amp;
-            <br />
-            <span className="text-gold-light">Administrative</span>
-            <br />
-            Collaboration Engine
-          </h1>
-          <p className="text-white/80 text-lg leading-relaxed mb-8 max-w-xl">
-            Automate MEL roster processing, check individual eligibility, and
-            generate compliant documents — built for Air Force HR professionals.
-          </p>
-          <div className="flex flex-wrap gap-4">
-            <Link
-              to="/features"
-              className="inline-flex items-center gap-2 bg-white text-primary-dark font-bold px-7 py-3.5 rounded-xl hover:bg-gold-light hover:text-primary-dark transition-colors shadow-lg"
-            >
-              <Sparkles className="w-5 h-5" />
-              Explore Features
-            </Link>
-            <Link
-              to="/how-to"
-              className="inline-flex items-center gap-2 bg-white/10 border border-white/30 text-white font-semibold px-7 py-3.5 rounded-xl hover:bg-white/20 transition-colors"
-            >
-              <BookOpen className="w-5 h-5" />
-              How To Guide
-            </Link>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* ---------- Stat strip ---------- */
-
-interface Stat {
-  icon: React.ReactNode;
-  value: string;
-  label: string;
-  sub: string;
-}
-
-const STATS: Stat[] = [
+const CYCLE_PHASES = [
   {
-    icon: <Users className="w-5 h-5 text-gold mx-auto mb-1" />,
-    value: "—",
-    label: "Roster Slots Checked",
-    sub: "Total eligibility checks run",
+    title: "Eligibility determination",
+    desc: "Run the roster through TIG, TIS, HYT and AFSC checks.",
+    to: "/initial-mel",
+    tool: "Initial MEL",
   },
   {
-    icon: <FileCheck2 className="w-5 h-5 text-gold mx-auto mb-1" />,
-    value: "—",
-    label: "PDF Packets Generated",
-    sub: "MEL packets produced",
+    title: "Individual verification",
+    desc: "Confirm dates for specific members before the cutoff.",
+    to: "/calculators/promotion",
+    tool: "Promotion eligibility",
   },
   {
-    icon: <Layers className="w-5 h-5 text-gold mx-auto mb-1" />,
-    value: "6",
-    label: "Promotion Cycles",
-    sub: "SSG · TSG · MSG · SMS · CMSgt · CCC",
+    title: "Final packet",
+    desc: "Produce the Final MEL with senior rater signature blocks.",
+    to: "/final-mel",
+    tool: "Final MEL",
   },
   {
-    icon: <Clock className="w-5 h-5 text-gold mx-auto mb-1" />,
-    value: "4–6 hrs",
-    label: "Saved Per Cycle",
-    sub: "vs. manual MEL processing",
+    title: "Correspondence",
+    desc: "Document post-board actions with a formatted MFR.",
+    to: "/memo-generator",
+    tool: "Memo / MFR",
   },
 ];
 
-function StatStrip() {
+const CHECKLIST = [
+  "Delete PII columns (SSAN, DOB, home address, phone…) before uploading.",
+  "Verify DOR, TAFMSD and AFSC data are accurate in the source roster.",
+  "Review every flagged member before generating documents.",
+  "Confirm PASCODEs match Force Distributor data from AFPC.",
+  "Generated MELs contain CUI — handle and store them appropriately.",
+];
+
+export default function Home() {
   return (
-    <div className="bg-slate-900 text-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-          {STATS.map((s) => (
-            <div key={s.label} className="py-2">
-              {s.icon}
-              <p className="text-3xl font-black text-white">{s.value}</p>
-              <p className="text-sm font-semibold text-white mt-1">{s.label}</p>
-              <p className="text-xs text-slate-400 mt-0.5">{s.sub}</p>
+    <Page>
+      <PageHeader
+        title="Dashboard"
+        description="Promotion eligibility, roster reports and correspondence tools for Commander's Support Staff."
+        actions={
+          <>
+            <Link
+              to="/rosters"
+              className="inline-flex h-9 items-center gap-2 rounded-md border border-line-strong/60 bg-surface px-4 text-sm font-medium text-fg shadow-sm transition-colors hover:bg-surface-hover"
+            >
+              <ListChecks className="h-4 w-4" aria-hidden="true" />
+              Roster reports
+            </Link>
+            <Link
+              to="/initial-mel"
+              className="inline-flex h-9 items-center gap-2 rounded-md bg-primary px-4 text-sm font-medium text-primary-fg shadow-sm transition-colors hover:bg-primary-hover"
+            >
+              <ClipboardCheck className="h-4 w-4" aria-hidden="true" />
+              Start Initial MEL
+            </Link>
+          </>
+        }
+      />
+
+      <Alert tone="info" title="PACE processes uploaded data but does not store it.">
+        Rosters you upload are used only to build your documents for this session.
+        Remove PII columns before uploading, and treat generated MELs as CUI.
+      </Alert>
+
+      <div className="grid grid-cols-1 items-start gap-6 xl:grid-cols-3">
+        <div className="min-w-0 space-y-6 xl:col-span-2">
+          <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-2">
+            <div className="space-y-4">
+              {LEFT_GROUPS.map((label) => (
+                <ToolGroup key={label} label={label} />
+              ))}
             </div>
-          ))}
+            <div className="space-y-4">
+              {RIGHT_GROUPS.map((label) => (
+                <ToolGroup key={label} label={label} />
+              ))}
+            </div>
+          </div>
+
+          <Card>
+            <CardHeader
+              title="Typical WAPS cycle"
+              description="Where each tool fits in the annual promotion calendar."
+            />
+            <CardBody>
+              <ol className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                {CYCLE_PHASES.map((p, i) => (
+                  <li key={p.title} className="flex gap-3 lg:flex-col lg:gap-2">
+                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary-soft text-xs font-semibold tabular-nums text-primary-text">
+                      {i + 1}
+                    </span>
+                    <div className="min-w-0">
+                      <p className="text-[13px] font-medium text-fg">{p.title}</p>
+                      <p className="mt-0.5 text-xs leading-5 text-fg-muted">{p.desc}</p>
+                      <Link to={p.to} className="link mt-1 inline-flex items-center gap-1 text-xs">
+                        {p.tool}
+                        <ArrowRight className="h-3 w-3" aria-hidden="true" />
+                      </Link>
+                    </div>
+                  </li>
+                ))}
+              </ol>
+            </CardBody>
+          </Card>
         </div>
+
+        <aside className="space-y-6">
+          <ServiceStatus />
+
+          <Card>
+            <CardHeader title="Before you upload" />
+            <CardBody className="py-3">
+              <ul className="space-y-2">
+                {CHECKLIST.map((t) => (
+                  <li key={t} className="flex gap-2.5 text-[13px] leading-5 text-fg-muted">
+                    <span className="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full bg-gold" aria-hidden="true" />
+                    {t}
+                  </li>
+                ))}
+              </ul>
+            </CardBody>
+          </Card>
+
+          {HELP_GROUP ? (
+            <Card>
+              <CardHeader title="Help" />
+              <ul className="divide-y divide-line">
+                {HELP_GROUP.items.map((item) => (
+                  <li key={item.to}>
+                    <Link
+                      to={item.to}
+                      className="flex items-center gap-3 px-4 py-3 text-sm transition-colors hover:bg-surface-hover sm:px-5"
+                    >
+                      <item.icon className="h-4 w-4 shrink-0 text-fg-subtle" aria-hidden="true" />
+                      <span className="min-w-0 flex-1">
+                        <span className="block font-medium text-fg">{item.label}</span>
+                        <span className="block text-xs text-fg-muted">{item.description}</span>
+                      </span>
+                      <ArrowUpRight className="h-4 w-4 shrink-0 text-fg-subtle" aria-hidden="true" />
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </Card>
+          ) : null}
+        </aside>
       </div>
-    </div>
+    </Page>
   );
 }
 
-/* ---------- Section header ---------- */
-
-function SectionHeader({
-  number,
-  title,
-  subtitle,
-}: {
-  number: string;
-  title: string;
-  subtitle: string;
-}) {
+function ToolGroup({ label }: { label: string }) {
+  const group = NAV_GROUPS.find((g) => g.label === label);
+  if (!group) return null;
   return (
-    <div className="flex items-start gap-4 mb-6">
-      <span className="text-5xl font-black text-slate-100 leading-none select-none">
-        {number}
-      </span>
-      <div className="pt-1">
-        <h2 className="text-2xl font-bold text-slate-900">{title}</h2>
-        <p className="text-slate-500 text-sm mt-0.5">{subtitle}</p>
-      </div>
-    </div>
+    <Card>
+      <CardHeader className="py-2.5">
+        <h2 className="eyebrow">{group.label}</h2>
+      </CardHeader>
+      <ul className="divide-y divide-line">
+        {group.items.map((item) => (
+          <li key={item.to}>
+            <ToolRow item={item} />
+          </li>
+        ))}
+      </ul>
+    </Card>
   );
 }
 
-/* ---------- Tool card ---------- */
-
-interface ToolCardProps {
-  to: string;
-  icon: React.ReactNode;
-  iconBg: string;
-  title: string;
-  description: string;
-  tag?: string;
-  tagColor?: string;
-}
-
-function ToolCard({
-  to,
-  icon,
-  iconBg,
-  title,
-  description,
-  tag,
-  tagColor,
-}: ToolCardProps) {
+function ToolRow({ item }: { item: NavItem }) {
+  const Icon = item.icon;
   return (
     <Link
-      to={to}
-      className="group flex flex-col bg-white rounded-xl border border-slate-200 shadow-sm hover:shadow-lg hover:border-primary/40 transition-all duration-200 p-6"
+      to={item.to}
+      className="group flex gap-3 px-4 py-3.5 transition-colors hover:bg-surface-hover sm:px-5"
     >
-      <div className="flex items-start justify-between mb-4">
-        <div className={`p-3 rounded-xl ${iconBg}`}>{icon}</div>
-        {tag ? (
-          <span
-            className={`text-xs font-semibold px-2.5 py-1 rounded-full ${tagColor}`}
-          >
-            {tag}
+      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-primary-soft text-primary-text">
+        <Icon className="h-[18px] w-[18px]" aria-hidden="true" />
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="flex items-center gap-2">
+          <span className="text-sm font-semibold text-fg group-hover:text-primary-text">
+            {item.label}
           </span>
+          {item.badge ? <Badge color="amber">{item.badge}</Badge> : null}
+        </span>
+        <span className="mt-0.5 block text-[13px] leading-5 text-fg-muted">
+          {item.description}
+        </span>
+        {item.io ? (
+          <span className="mt-1 block text-xs text-fg-subtle">{item.io}</span>
         ) : null}
-      </div>
-      <h3 className="font-bold text-slate-900 text-lg mb-1.5 group-hover:text-primary transition-colors">
-        {title}
-      </h3>
-      <p className="text-slate-500 text-sm leading-relaxed flex-1">
-        {description}
-      </p>
-      <div className="flex items-center gap-1 mt-4 text-primary text-sm font-medium">
-        Open tool{" "}
-        <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
-      </div>
+      </span>
+      <ArrowRight
+        className="mt-2.5 h-4 w-4 shrink-0 text-fg-subtle transition-transform group-hover:translate-x-0.5 group-hover:text-primary-text"
+        aria-hidden="true"
+      />
     </Link>
   );
 }
 
-/* ---------- Tools (sections 01/02/03) ---------- */
+function ServiceStatus() {
+  const [status, setStatus] = useState<"checking" | "online" | "offline">("checking");
 
-function Tools() {
+  useEffect(() => {
+    let cancelled = false;
+    api
+      .health()
+      .then(() => !cancelled && setStatus("online"))
+      .catch(() => !cancelled && setStatus("offline"));
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   return (
-    <div className="bg-slate-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 space-y-16">
-        <section>
-          <SectionHeader
-            number="01"
-            title="Master Eligibility List"
-            subtitle="Upload a roster file and generate promotion board MEL packets as PDF"
-          />
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <ToolCard
-              to="/initial-mel"
-              icon={<ClipboardCheck className="w-6 h-6 text-primary" />}
-              iconBg="bg-primary/10"
-              title="Initial MEL"
-              description="Upload a member roster to automatically run TIG, TIS, HYT, and AFSC eligibility checks and produce the Initial Master Eligibility Listing."
-              tag="Most Used"
-              tagColor="bg-primary/10 text-primary"
-            />
-            <ToolCard
-              to="/final-mel"
-              icon={<FileCheck2 className="w-6 h-6 text-success" />}
-              iconBg="bg-success/10"
-              title="Final MEL"
-              description="Generate the Final Master Eligibility Listing with senior rater signature block and CUI-compliant PDF output for board submission."
-            />
-            <ToolCard
-              to="/mpf-roster"
-              icon={<Layers className="w-6 h-6 text-accent" />}
-              iconBg="bg-accent/10"
-              title="MPF Roster"
-              description="Upload a roster to generate an MPF list, MEL format, or both as a merged PDF."
-            />
-          </div>
-        </section>
-
-        <section>
-          <SectionHeader
-            number="02"
-            title="Eligibility Calculators"
-            subtitle="Individual member checks for promotion and Below-the-Zone eligibility"
-          />
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <ToolCard
-              to="/calculators/promotion"
-              icon={<Calculator className="w-6 h-6 text-special" />}
-              iconBg="bg-special/10"
-              title="Promotion Eligibility"
-              description="Enter a member's DOR and TAFMSD to verify TIG, TIS, and High Year Tenure requirements for any promotion cycle year."
-            />
-            <ToolCard
-              to="/calculators/btz"
-              icon={<Calculator className="w-6 h-6 text-gold" />}
-              iconBg="bg-gold/10"
-              title="BTZ Eligibility"
-              description="Determine Below-the-Zone A1C→SRA board quarter, 20-month TIG consideration window, and 36-month TIS exclusion rule."
-              tag="A1C → SRA"
-              tagColor="bg-gold/10 text-gold"
-            />
-          </div>
-        </section>
-
-        <section>
-          <SectionHeader
-            number="03"
-            title="Document Generation"
-            subtitle="Create properly formatted Air Force documents and correspondence"
-          />
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <ToolCard
-              to="/memo-generator"
-              icon={<FileText className="w-6 h-6 text-accent" />}
-              iconBg="bg-accent/10"
-              title="Memorandum for Record"
-              description="Generate a properly formatted AF MFR per AFH 33-337 (The Tongue and Quill) with correct header, numbered paragraphs, and right-indented signature block."
-              tag="New"
-              tagColor="bg-accent/10 text-accent"
-            />
-          </div>
-        </section>
-      </div>
-    </div>
-  );
-}
-
-/* ---------- Policy / WAPS section (dark) ---------- */
-
-interface Policy {
-  icon: React.ReactNode;
-  title: string;
-  desc: string;
-}
-
-const POLICIES: Policy[] = [
-  {
-    icon: <Award className="w-6 h-6 text-gold" />,
-    title: "Policy Aligned",
-    desc: "Built against current DAFI 36-2502 promotion policy, HYT limits, and TIG/TIS requirements.",
-  },
-  {
-    icon: <Lock className="w-6 h-6 text-gold" />,
-    title: "CUI Compliant",
-    desc: "PDF outputs include proper CUI headers, footers, and classification markings required for board submission.",
-  },
-  {
-    icon: <Compass className="w-6 h-6 text-gold" />,
-    title: "Full Cycle Coverage",
-    desc: "Supports SSG, TSG, MSG, SMS, CMSgt, and CCC promotion cycles with per-rank rule sets.",
-  },
-  {
-    icon: <Flag className="w-6 h-6 text-gold" />,
-    title: "Discrepancy Flagging",
-    desc: "Automatically identifies members requiring manual review with specific reason codes.",
-  },
-];
-
-function PolicySection() {
-  return (
-    <div className="bg-slate-900 text-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
-          <div>
-            <h2 className="text-3xl font-black text-white mb-6">
-              Built for the WAPS cycle
-            </h2>
-            <p className="text-slate-300 leading-relaxed mb-6">
-              The Weighted Airman Promotion System (WAPS) governs how Airmen
-              compete for promotion to Staff Sergeant through Senior Master
-              Sergeant. Central to every cycle is the Master Eligibility List —
-              a time-intensive document that requires precise eligibility
-              determination for every competing member.
-            </p>
-            <p className="text-slate-400 leading-relaxed">
-              PACE was built to take the manual work out of MEL production:
-              upload a roster, get a policy-compliant PDF. What used to take an
-              MPF shop 4–6 hours per cycle now takes minutes.
-            </p>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            {POLICIES.map((p) => (
-              <div
-                key={p.title}
-                className="bg-white/5 border border-white/10 rounded-xl p-5"
-              >
-                <div className="mb-3">{p.icon}</div>
-                <h3 className="font-bold text-white text-sm mb-1.5">
-                  {p.title}
-                </h3>
-                <p className="text-slate-400 text-xs leading-relaxed">
-                  {p.desc}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* ---------- Audience cards ---------- */
-
-interface Audience {
-  icon: React.ReactNode;
-  bg: string;
-  role: string;
-  desc: string;
-  tools: string[];
-}
-
-const AUDIENCES: Audience[] = [
-  {
-    icon: <Building2 className="w-8 h-8 text-primary" />,
-    bg: "bg-primary/5 border-primary/20",
-    role: "MPF / CSS Shops",
-    desc: "Military Personnel Flights and Commander Support Staffs responsible for producing and validating MEL packets for their unit.",
-    tools: ["Initial MEL", "Final MEL"],
-  },
-  {
-    icon: <UserCheck className="w-8 h-8 text-special" />,
-    bg: "bg-special/5 border-special/20",
-    role: "Unit HR & First Sergeants",
-    desc: "First Sergeants and unit HR reps who need to verify individual member eligibility before a board or during mid-cycle counseling.",
-    tools: ["Promotion Eligibility", "BTZ Eligibility"],
-  },
-  {
-    icon: <Briefcase className="w-8 h-8 text-accent" />,
-    bg: "bg-accent/5 border-accent/20",
-    role: "Supervisors & Leadership",
-    desc: "Flight commanders, superintendents, and supervisors generating official correspondence such as memoranda for record.",
-    tools: ["Memorandum for Record"],
-  },
-];
-
-function Audiences() {
-  return (
-    <div className="bg-white border-t border-slate-100">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-        <div className="text-center mb-14">
-          <h2 className="text-3xl font-black text-slate-900 mb-3">
-            Who uses PACE?
-          </h2>
-          <p className="text-slate-500 max-w-xl mx-auto">
-            Designed for the people responsible for managing Air Force
-            promotion boards and personnel records
+    <Card>
+      <CardBody className="flex items-center justify-between gap-3 py-3.5">
+        <div>
+          <p className="text-[13px] font-medium text-fg">PACE service</p>
+          <p className="text-xs text-fg-muted">
+            {status === "offline"
+              ? "Uploads and document generation are unavailable right now."
+              : "Processing server for uploads and documents."}
           </p>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {AUDIENCES.map((a) => (
-            <div key={a.role} className={`rounded-xl border ${a.bg} p-7`}>
-              <div className="mb-4">{a.icon}</div>
-              <h3 className="font-bold text-slate-900 text-lg mb-2">
-                {a.role}
-              </h3>
-              <p className="text-slate-500 text-sm leading-relaxed mb-5">
-                {a.desc}
-              </p>
-              <div className="space-y-1.5">
-                {a.tools.map((t) => (
-                  <div
-                    key={t}
-                    className="flex items-center gap-2 text-xs text-slate-600"
-                  >
-                    <CheckCircle2 className="w-3.5 h-3.5 text-success shrink-0" />
-                    {t}
-                  </div>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* ---------- WAPS cycle workflow ---------- */
-
-interface Phase {
-  phase: string;
-  color: string;
-  title: string;
-  desc: string;
-  tool: string;
-  toolTo: string;
-}
-
-const PHASES: Phase[] = [
-  {
-    phase: "01",
-    color: "bg-primary",
-    title: "Eligibility Determination",
-    desc: "Unit CSS / MPF runs the initial roster through TIG, TIS, HYT, and AFSC checks to build the Initial MEL.",
-    tool: "Initial MEL",
-    toolTo: "/initial-mel",
-  },
-  {
-    phase: "02",
-    color: "bg-special",
-    title: "Individual Verification",
-    desc: "Members or supervisors verify individual eligibility dates before the board cutoff using the promotion calculator.",
-    tool: "Promotion Eligibility",
-    toolTo: "/calculators/promotion",
-  },
-  {
-    phase: "03",
-    color: "bg-gold",
-    title: "Final Packet Submission",
-    desc: "CSS produces the Final MEL with senior rater signature block for submission to the promotion board.",
-    tool: "Final MEL",
-    toolTo: "/final-mel",
-  },
-  {
-    phase: "04",
-    color: "bg-accent",
-    title: "Correspondence & Records",
-    desc: "Post-board memos, notifications, and records actions are documented with properly formatted MFRs.",
-    tool: "Memorandum Generator",
-    toolTo: "/memo-generator",
-  },
-];
-
-function Workflow() {
-  return (
-    <div className="bg-slate-50 border-t border-slate-200">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
-          <div>
-            <h2 className="text-3xl font-black text-slate-900 mb-3">
-              How a typical WAPS cycle flows
-            </h2>
-            <p className="text-slate-500 leading-relaxed mb-6">
-              WAPS promotion cycles run on an annual calendar. Understanding
-              when each phase occurs helps units stay ahead of board submission
-              deadlines.
-            </p>
-            <p className="text-slate-500 leading-relaxed mb-8">
-              PACE automates the most labor-intensive step — determining which
-              members are eligible — so HR professionals can focus on the parts
-              that require human judgement.
-            </p>
-            <Link
-              to="/how-to"
-              className="inline-flex items-center gap-2 bg-primary text-white font-semibold px-5 py-2.5 rounded-lg hover:bg-primary-dark transition-colors"
-            >
-              <BookOpen className="w-4 h-4" />
-              Read the How To Guide
-              <ArrowRight className="w-4 h-4" />
-            </Link>
-          </div>
-          <div className="space-y-4">
-            {PHASES.map((p) => (
-              <div
-                key={p.phase}
-                className="flex gap-4 bg-white border border-slate-200 rounded-xl p-5 shadow-sm"
-              >
-                <div
-                  className={`${p.color} text-white text-xs font-black w-8 h-8 rounded-lg flex items-center justify-center shrink-0`}
-                >
-                  {p.phase}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-bold text-slate-900 text-sm mb-1">
-                    {p.title}
-                  </h3>
-                  <p className="text-slate-500 text-xs leading-relaxed mb-2">
-                    {p.desc}
-                  </p>
-                  <Link
-                    to={p.toolTo}
-                    className="inline-flex items-center gap-1 text-xs text-primary font-semibold hover:underline"
-                  >
-                    {p.tool}{" "}
-                    <ArrowRight className="w-3 h-3" />
-                  </Link>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* ---------- Final CTA ---------- */
-
-function CtaFooter() {
-  return (
-    <div className="bg-gradient-to-r from-primary-dark to-primary">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 text-center">
-        <h2 className="text-3xl font-black text-white mb-3">
-          Ready to run your next MEL?
-        </h2>
-        <p className="text-white/70 mb-8 max-w-lg mx-auto">
-          Upload your roster and have a policy-compliant PDF in minutes.
-        </p>
-        <div className="flex flex-wrap justify-center gap-4">
-          <Link
-            to="/initial-mel"
-            className="inline-flex items-center gap-2 bg-white text-primary-dark font-bold px-7 py-3.5 rounded-xl hover:bg-primary-50 transition-colors shadow-lg"
-          >
-            <ClipboardCheck className="w-5 h-5" />
-            Start Initial MEL
-          </Link>
-          <Link
-            to="/how-to"
-            className="inline-flex items-center gap-2 bg-white/10 border border-white/30 text-white font-semibold px-7 py-3.5 rounded-xl hover:bg-white/20 transition-colors"
-          >
-            <BookOpen className="w-5 h-5" />
-            How To Guide
-          </Link>
-        </div>
-      </div>
-    </div>
+        {status === "checking" ? (
+          <Badge color="neutral" dot>
+            Checking
+          </Badge>
+        ) : status === "online" ? (
+          <Badge color="green" dot>
+            Online
+          </Badge>
+        ) : (
+          <Badge color="red" dot>
+            Unreachable
+          </Badge>
+        )}
+      </CardBody>
+    </Card>
   );
 }

@@ -1,4 +1,4 @@
-import { type ReactNode } from "react";
+import { useRef, type KeyboardEvent, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
 export interface TabItem {
@@ -12,34 +12,62 @@ interface TabsProps {
   value: string;
   onChange: (value: string) => void;
   className?: string;
+  /** Accessible name for the tab list. */
+  ariaLabel?: string;
 }
 
-export function Tabs({ items, value, onChange, className }: TabsProps) {
+export function Tabs({ items, value, onChange, className, ariaLabel = "Tabs" }: TabsProps) {
+  const refs = useRef<Array<HTMLButtonElement | null>>([]);
+
+  const onKeyDown = (e: KeyboardEvent<HTMLButtonElement>, i: number) => {
+    let next = -1;
+    if (e.key === "ArrowRight") next = (i + 1) % items.length;
+    else if (e.key === "ArrowLeft") next = (i - 1 + items.length) % items.length;
+    else if (e.key === "Home") next = 0;
+    else if (e.key === "End") next = items.length - 1;
+    if (next < 0) return;
+    e.preventDefault();
+    refs.current[next]?.focus();
+    onChange(items[next].value);
+  };
+
   return (
-    <div className={cn("border-b border-slate-200", className)}>
-      <nav className="flex gap-6 -mb-px overflow-x-auto" aria-label="Tabs">
-        {items.map((item) => {
+    <div className={cn("border-b border-line", className)}>
+      <div
+        role="tablist"
+        aria-label={ariaLabel}
+        className="scroll-thin -mb-px flex gap-1 overflow-x-auto"
+      >
+        {items.map((item, i) => {
           const active = item.value === value;
           return (
             <button
               key={item.value}
+              ref={(el) => {
+                refs.current[i] = el;
+              }}
               type="button"
+              role="tab"
+              aria-selected={active}
+              tabIndex={active ? 0 : -1}
               onClick={() => onChange(item.value)}
+              onKeyDown={(e) => onKeyDown(e, i)}
               className={cn(
-                "whitespace-nowrap py-3 px-1 border-b-2 text-sm font-medium transition-colors",
+                "inline-flex shrink-0 items-center gap-2 whitespace-nowrap border-b-2 px-3 py-2.5 text-sm font-medium transition-colors",
+                "focus-visible:outline-offset-[-2px]",
                 active
-                  ? "border-navy-900 text-navy-900"
-                  : "border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300",
+                  ? "border-primary text-fg dark:border-primary-text"
+                  : "border-transparent text-fg-muted hover:border-line-strong/50 hover:text-fg",
               )}
             >
               {item.label}
               {typeof item.count === "number" ? (
                 <span
                   className={cn(
-                    "ml-2 inline-flex items-center rounded-full px-2 py-0.5 text-xs",
+                    "inline-flex min-w-[1.5rem] items-center justify-center rounded-full px-1.5 py-px text-xs tabular-nums",
                     active
-                      ? "bg-navy-900 text-white"
-                      : "bg-slate-100 text-slate-700",
+                      ? "bg-primary text-primary-fg"
+                      : "bg-surface-hover text-fg-muted",
                   )}
                 >
                   {item.count}
@@ -48,7 +76,7 @@ export function Tabs({ items, value, onChange, className }: TabsProps) {
             </button>
           );
         })}
-      </nav>
+      </div>
     </div>
   );
 }

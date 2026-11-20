@@ -1,8 +1,19 @@
 import { useState } from "react";
-import { Calculator, CheckCircle2, XCircle, AlertCircle } from "lucide-react";
-import { Input } from "@/components/ui/Input";
+import { Calculator } from "lucide-react";
 import { Select } from "@/components/ui/Select";
 import { Button } from "@/components/ui/Button";
+import { Alert } from "@/components/ui/Alert";
+import { Card, CardBody, CardHeader } from "@/components/ui/Card";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { SmartDateInput } from "@/components/ui/SmartDateInput";
+import { Page } from "@/components/Page";
+import {
+  ReasonList,
+  RequirementList,
+  RequirementSection,
+  Verdict,
+} from "@/features/calculators/Result";
 import { apiClient } from "@/lib/api";
 import { toBackendDate } from "@/lib/utils";
 import type { PromotionEligibilityResult } from "@/types";
@@ -74,94 +85,89 @@ export default function PromotionCalculator() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="mb-8">
-        <div className="flex items-center space-x-3 mb-2">
-          <div className="p-2 bg-primary/10 rounded-lg">
-            <Calculator className="w-7 h-7 text-primary" />
-          </div>
-          <div>
-            <h2 className="text-3xl font-bold text-slate-900">
-              Promotion Eligibility
-            </h2>
-            <p className="text-slate-500 text-sm mt-0.5">
-              Check TIG, TIS, and HYT requirements for a promotion cycle
-            </p>
-          </div>
-        </div>
-      </div>
+    <Page>
+      <PageHeader
+        eyebrow="Calculators"
+        icon={<Calculator />}
+        title="Promotion eligibility"
+        description="Check TIG, TIS, and HYT requirements for a promotion cycle."
+      />
 
-      <div className="bg-white border border-slate-200 rounded-xl shadow-sm">
-        <div className="border-b border-slate-200 px-6 py-4">
-          <h3 className="text-lg font-semibold text-slate-900">
-            Member Information
-          </h3>
-          <p className="text-sm text-slate-500">
-            Enter the member's dates and current rank to check promotion
-            eligibility
-          </p>
-        </div>
-        <div className="px-6 py-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-            <Input
-              label="Date of Rank (DOR / TIG Start) *"
-              type="date"
-              value={form.tig_date}
-              onChange={(e) => update("tig_date", e.target.value)}
-              hint="The date the member was promoted to current rank"
-            />
-            <Input
-              label="TAFMSD (TIS Start Date) *"
-              type="date"
-              value={form.tis_date}
-              onChange={(e) => update("tis_date", e.target.value)}
-              hint="Total Active Federal Military Service Date"
-            />
-            <Select
-              label="Current Rank *"
-              value={form.current_rank}
-              onChange={(e) => update("current_rank", e.target.value)}
-            >
-              <option value="">Select rank...</option>
-              {RANKS.map((r) => (
-                <option key={r.value} value={r.value}>
-                  {r.label}
-                </option>
-              ))}
-            </Select>
-            <Select
-              label="Target Promotion Cycle Year *"
-              value={form.target_year}
-              onChange={(e) => update("target_year", e.target.value)}
-            >
-              {YEARS.map((y) => (
-                <option key={y.value} value={y.value}>
-                  {y.label}
-                </option>
-              ))}
-            </Select>
-          </div>
-
-          <Button
-            variant="primary"
-            className="w-full"
-            disabled={!canSubmit || loading}
-            loading={loading}
-            onClick={submit}
-          >
-            {loading ? "Checking..." : "Check Eligibility"}
-          </Button>
-
-          {error ? (
-            <div className="mt-4 flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
-              <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" /> {error}
+      <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-5">
+        <Card className="lg:col-span-2">
+          <CardHeader
+            title="Member information"
+            description="Enter the member's dates and current rank."
+          />
+          <CardBody>
+            <div className="space-y-4">
+              <SmartDateInput
+                label="Date of Rank (DOR / TIG start) *"
+                value={form.tig_date}
+                onChange={(v) => update("tig_date", v)}
+                hint="The date the member was promoted to current rank"
+              />
+              <SmartDateInput
+                label="TAFMSD (TIS start date) *"
+                value={form.tis_date}
+                onChange={(v) => update("tis_date", v)}
+                hint="Total Active Federal Military Service Date"
+              />
+              <Select
+                label="Current rank *"
+                value={form.current_rank}
+                onChange={(e) => update("current_rank", e.target.value)}
+              >
+                <option value="">Select rank…</option>
+                {RANKS.map((r) => (
+                  <option key={r.value} value={r.value}>
+                    {r.label}
+                  </option>
+                ))}
+              </Select>
+              <Select
+                label="Target promotion cycle year *"
+                value={form.target_year}
+                onChange={(e) => update("target_year", e.target.value)}
+              >
+                {YEARS.map((y) => (
+                  <option key={y.value} value={y.value}>
+                    {y.label}
+                  </option>
+                ))}
+              </Select>
+              <Button
+                className="w-full"
+                disabled={!canSubmit || loading}
+                loading={loading}
+                onClick={submit}
+              >
+                {loading ? "Checking…" : "Check eligibility"}
+              </Button>
             </div>
-          ) : null}
+          </CardBody>
+        </Card>
 
-          {result ? <ResultPanel result={result} currentRank={form.current_rank} /> : null}
+        <div className="space-y-4 lg:col-span-3" aria-live="polite">
+          {error ? (
+            <Alert tone="danger" title="Couldn't check eligibility">
+              {error}
+            </Alert>
+          ) : null}
+          {result ? (
+            <ResultPanel result={result} currentRank={form.current_rank} />
+          ) : !error ? (
+            <Card>
+              <EmptyState
+                icon={<Calculator />}
+                title="No result yet"
+                description="Enter the member's DOR, TAFMSD, rank and cycle year, then check eligibility. Each requirement is itemized here."
+              />
+            </Card>
+          ) : null}
         </div>
       </div>
-    </div>
+    </Page>
   );
 }
 
@@ -173,36 +179,18 @@ function ResultPanel({
   currentRank: string;
 }) {
   return (
-    <div
-      className={`mt-6 rounded-xl border-2 p-5 ${
-        result.eligible
-          ? "border-green-300 bg-green-50"
-          : "border-red-300 bg-red-50"
-      }`}
-    >
-      <div className="flex items-center gap-3 mb-5">
-        {result.eligible ? (
-          <CheckCircle2 className="w-10 h-10 text-green-600" />
-        ) : (
-          <XCircle className="w-10 h-10 text-red-600" />
-        )}
-        <div>
-          <p
-            className={`text-2xl font-bold ${
-              result.eligible ? "text-green-800" : "text-red-800"
-            }`}
-          >
-            {result.eligible ? "ELIGIBLE" : "NOT ELIGIBLE"}
-          </p>
-          <p className="text-sm text-slate-600">
-            {currentRank} → {result.cycle} Promotion Cycle {result.year}
-            {" | SCOD: "}
-            {result.scod}
-          </p>
-        </div>
-      </div>
-
-      <div className="bg-white rounded-lg border border-slate-200 divide-y divide-slate-100">
+    <div className="space-y-4">
+      <Verdict
+        eligible={result.eligible}
+        title={result.eligible ? "Eligible" : "Not eligible"}
+        subtitle={
+          <>
+            {currentRank} → {result.cycle} promotion cycle {result.year} · SCOD{" "}
+            <span className="font-medium tabular-nums text-fg">{result.scod}</span>
+          </>
+        }
+      />
+      <RequirementList>
         <RequirementSection
           title="Time in Grade (TIG)"
           met={result.requirements.tig.met}
@@ -245,78 +233,12 @@ function ResultPanel({
             { label: "MDOS Required", value: result.requirements.hyt.mdos_date },
           ]}
         />
-      </div>
-
+      </RequirementList>
       {!result.eligible &&
       result.unmet_requirements &&
       result.unmet_requirements.length > 0 ? (
-        <div className="mt-3 p-3 bg-red-100 rounded-lg">
-          <p className="text-sm font-semibold text-red-800 mb-1">
-            Reason(s) Not Eligible:
-          </p>
-          <ul className="list-disc list-inside space-y-0.5">
-            {result.unmet_requirements.map((r, i) => (
-              <li key={i} className="text-sm text-red-700">
-                {r}
-              </li>
-            ))}
-          </ul>
-        </div>
+        <ReasonList reasons={result.unmet_requirements} />
       ) : null}
-    </div>
-  );
-}
-
-function RequirementSection({
-  title,
-  met,
-  metLabel,
-  notMetLabel,
-  rows,
-}: {
-  title: string;
-  met: boolean;
-  metLabel: string;
-  notMetLabel: string;
-  rows: Array<{ label: string; value: string }>;
-}) {
-  return (
-    <div className="p-4">
-      <div className="flex justify-between items-center mb-2">
-        <span className="font-semibold text-slate-700">{title}</span>
-        <MetBadge met={met} label={met ? metLabel : notMetLabel} />
-      </div>
-      <div className="space-y-0.5">
-        {rows.map((r) => (
-          <KvRow key={r.label} label={r.label} value={r.value} />
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function MetBadge({ met, label }: { met: boolean; label: string }) {
-  return (
-    <span
-      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold ${
-        met ? "bg-green-100 text-green-800" : "bg-red-100 text-red-700"
-      }`}
-    >
-      {met ? (
-        <CheckCircle2 className="w-3 h-3" />
-      ) : (
-        <XCircle className="w-3 h-3" />
-      )}
-      {label}
-    </span>
-  );
-}
-
-function KvRow({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex justify-between items-start py-1.5 border-b border-slate-100 last:border-0 text-sm">
-      <span className="text-slate-500">{label}</span>
-      <span className="font-medium text-slate-800 text-right">{value}</span>
     </div>
   );
 }

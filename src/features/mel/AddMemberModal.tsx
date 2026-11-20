@@ -223,11 +223,9 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <div>
-      <h4 className="text-sm font-semibold text-primary uppercase tracking-wide mb-2">
-        {title}
-      </h4>
+    <fieldset>
+      <legend className="eyebrow mb-2.5">{title}</legend>
       {children}
-    </div>
+    </fieldset>
   );
 }

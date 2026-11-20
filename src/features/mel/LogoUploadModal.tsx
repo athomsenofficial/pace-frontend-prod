@@ -86,17 +86,22 @@ export function LogoUploadModal({
         className="hidden"
         onChange={onChange}
       />
-      <div className="border-2 border-dashed border-slate-300 rounded-lg p-6 text-center">
+      <div className="rounded-lg border-2 border-dashed border-line-strong/50 bg-surface-muted p-6 text-center">
         {preview ? (
-          <img
-            src={preview}
-            alt="Logo preview"
-            className="mx-auto max-h-40 object-contain"
-          />
+          <div className="mx-auto inline-block rounded-md bg-white p-3 shadow-card">
+            <img
+              src={preview}
+              alt="Logo preview"
+              className="mx-auto max-h-40 object-contain"
+            />
+          </div>
         ) : (
-          <div className="space-y-2 text-slate-500">
-            <ImageIcon className="h-10 w-10 mx-auto" />
-            <p className="text-sm">No logo uploaded</p>
+          <div className="space-y-2 text-fg-subtle">
+            <span className="mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-surface shadow-card">
+              <ImageIcon className="h-5 w-5" />
+            </span>
+            <p className="text-sm text-fg-muted">No logo selected</p>
+            <p className="text-xs">Image file used for MEL document branding.</p>
           </div>
         )}
         <Button

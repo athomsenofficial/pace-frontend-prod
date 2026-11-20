@@ -62,17 +62,22 @@ export function DeleteConfirmDialog({
         </>
       }
     >
-      <ul className="space-y-2 text-sm text-slate-700">
-        <li>
-          <span className="font-medium">Soft delete</span> keeps the record with a{" "}
-          <code className="bg-slate-100 px-1 rounded">deleted: true</code> flag for
-          audit retention.
-        </li>
-        <li>
-          <span className="font-medium">Hard delete</span> permanently removes the
-          record from the session.
-        </li>
-      </ul>
+      <dl className="space-y-3 text-sm">
+        <div className="rounded-lg border border-line bg-surface-muted px-3.5 py-3">
+          <dt className="font-medium text-fg">Soft delete</dt>
+          <dd className="mt-0.5 text-[13px] text-fg-muted">
+            Keeps the record with a{" "}
+            <code className="rounded bg-surface-hover px-1 font-mono text-xs">deleted: true</code>{" "}
+            flag for audit retention.
+          </dd>
+        </div>
+        <div className="rounded-lg border border-danger-line bg-danger-soft px-3.5 py-3">
+          <dt className="font-medium text-danger">Hard delete</dt>
+          <dd className="mt-0.5 text-[13px] text-fg-muted">
+            Permanently removes the record from the session.
+          </dd>
+        </div>
+      </dl>
     </Modal>
   );
 }

@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
-import { Building2, FileCheck2 } from "lucide-react";
-import { Card, CardBody, CardHeader } from "@/components/ui/Card";
+import { CheckCircle2, CircleDashed, FileCheck2 } from "lucide-react";
+import { Card, CardBody, CardHeader, CardFooter } from "@/components/ui/Card";
+import { Alert } from "@/components/ui/Alert";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { Button } from "@/components/ui/Button";
@@ -202,12 +204,11 @@ export function PascodeStep({
   if (pascodes.length === 0) {
     return (
       <Card>
-        <CardBody>
-          <div className="p-4 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-600">
-            No PASCODEs detected for this session. Verify the roster step and
-            ensure members include PASCODE assignments before continuing.
-          </div>
-        </CardBody>
+        <EmptyState
+          icon={<CircleDashed />}
+          title="No PASCODEs detected for this session"
+          description="Verify the roster step and ensure members include PASCODE assignments before continuing."
+        />
       </Card>
     );
   }
@@ -220,13 +221,11 @@ export function PascodeStep({
     const showSrDetail = pascode ? requiresSrDetail(pascode) : true;
     return (
       <div className="space-y-6">
-        <div className="space-y-4">
-          <div className="pb-2 border-b border-slate-200">
-            <p className="text-lg font-semibold text-slate-900">
-              Unit Commander Information
-            </p>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <fieldset className="space-y-4">
+          <legend className="mb-3 w-full border-b border-line pb-2 text-sm font-semibold text-fg">
+            Unit commander
+          </legend>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <Select
               label="Commander Rank *"
               value={entry.commander_rank}
@@ -241,7 +240,7 @@ export function PascodeStep({
               disabled={submitting}
               placeholder="Commander"
             />
-            <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-[1fr_8rem_1fr] md:col-span-2">
               <Input
                 label="First Name *"
                 value={entry.commander_first_name}
@@ -271,15 +270,13 @@ export function PascodeStep({
               />
             </div>
           </div>
-        </div>
+        </fieldset>
 
-        <div className="space-y-4">
-          <div className="pb-2 border-b border-slate-200">
-            <p className="text-lg font-semibold text-slate-900">
-              Senior Rater Information
-            </p>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <fieldset className="space-y-4">
+          <legend className="mb-3 w-full border-b border-line pb-2 text-sm font-semibold text-fg">
+            Senior rater
+          </legend>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <Input
               label="Senior Rater ID (SRID) *"
               value={entry.srid}
@@ -307,7 +304,7 @@ export function PascodeStep({
                   disabled={submitting}
                   placeholder="Commander"
                 />
-                <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-[1fr_8rem_1fr] md:col-span-2">
                   <Input
                     label="First Name *"
                     value={entry.senior_rater_first_name}
@@ -339,44 +336,91 @@ export function PascodeStep({
               </>
             ) : null}
           </div>
-        </div>
+        </fieldset>
       </div>
     );
   };
 
   const hasMultiple = pascodes.length > 1;
 
+  const isPascodeComplete = (p: string) => {
+    const e = entries[p];
+    if (!e) return false;
+    return isCommanderFilled(e) && isSridFilled(e) && (!requiresSrDetail(p) || isSrFilled(e));
+  };
+  const completeCount = pascodes.filter(isPascodeComplete).length;
+  const ready = canSubmit();
+
+  const pascodeBanner = (p: string, withApply: boolean) => (
+    <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-line bg-surface-muted px-3.5 py-2.5">
+      <div className="min-w-0">
+        <p className="text-sm font-medium text-fg">
+          PASCODE <span className="font-mono">{p}</span>
+        </p>
+        {pascodeUnitMap[p] ? (
+          <p className="truncate text-xs text-fg-muted">{pascodeUnitMap[p]}</p>
+        ) : null}
+      </div>
+      {withApply ? (
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          disabled={!entries[p]?.srid?.trim() || submitting}
+          onClick={() => applySridToAll(entries[p]?.srid ?? "")}
+          title="Copy this SRID into every PAS code"
+        >
+          Apply SRID to all PAS codes
+        </Button>
+      ) : null}
+    </div>
+  );
+
   return (
     <Card>
-      <CardHeader>
-        <h3 className="text-lg font-semibold text-slate-900">
-          Force Distribution Information
-        </h3>
-        <div className="flex items-center gap-2 mt-2">
-          <span className="text-sm text-slate-600">Session ID:</span>
-          <Badge color="navy">{sessionData.session_id}</Badge>
-        </div>
-      </CardHeader>
-      <CardBody>
-        <form onSubmit={submit} className="space-y-6">
+      <form onSubmit={submit}>
+        <CardHeader
+          title="Force distribution information"
+          description={
+            <>
+              Enter commander and senior rater details for each PASCODE.{" "}
+              <span className="whitespace-nowrap font-mono text-xs text-fg-subtle">
+                Session {sessionData.session_id}
+              </span>
+            </>
+          }
+          actions={
+            hasMultiple ? (
+              <Badge color={completeCount === pascodes.length ? "green" : "neutral"}>
+                {completeCount} of {pascodes.length} complete
+              </Badge>
+            ) : null
+          }
+        />
+        <CardBody className="space-y-5">
           {error ? (
-            <div className="p-4 bg-danger/10 border border-danger rounded-lg text-danger text-sm">
+            <Alert tone="danger" title="Couldn't generate the PDF" onDismiss={() => setError(null)}>
               {error}
-            </div>
+            </Alert>
           ) : null}
 
           {hasMultiple ? (
             <>
               <Tabs
+                ariaLabel="PASCODEs"
                 items={pascodes.map((p) => ({
                   value: p,
                   label: (
-                    <span className="flex items-center gap-2">
-                      <Building2 className="w-4 h-4" />
-                      {p}
+                    <span className="flex items-center gap-1.5">
+                      {isPascodeComplete(p) ? (
+                        <CheckCircle2 className="h-4 w-4 text-success" aria-label="Complete" />
+                      ) : (
+                        <CircleDashed className="h-4 w-4 text-fg-subtle" aria-label="Incomplete" />
+                      )}
+                      <span className="font-mono text-[13px]">{p}</span>
                       {pascodeUnitMap[p] ? (
-                        <span className="text-xs text-slate-500">
-                          ({pascodeUnitMap[p]})
+                        <span className="hidden max-w-[10rem] truncate text-xs font-normal text-fg-subtle md:inline">
+                          {pascodeUnitMap[p]}
                         </span>
                       ) : null}
                     </span>
@@ -387,29 +431,8 @@ export function PascodeStep({
               />
               {pascodes.map((p) =>
                 p === activeTab ? (
-                  <div key={p} className="space-y-4 pt-4">
-                    <div className="p-3 bg-slate-50 rounded-lg flex flex-wrap items-center justify-between gap-3">
-                      <div>
-                        <p className="text-sm font-medium text-slate-900">
-                          PASCODE: {p}
-                        </p>
-                        {pascodeUnitMap[p] ? (
-                          <p className="text-sm text-slate-600">
-                            Unit: {pascodeUnitMap[p]}
-                          </p>
-                        ) : null}
-                      </div>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        disabled={!entries[p]?.srid?.trim() || submitting}
-                        onClick={() => applySridToAll(entries[p]?.srid ?? "")}
-                        title="Copy this SRID into every PAS code"
-                      >
-                        Apply SRID to all PAS codes
-                      </Button>
-                    </div>
+                  <div key={p} className="space-y-5">
+                    {pascodeBanner(p, true)}
                     {renderForm(
                       entries[p] ?? blankEntry(),
                       (k, v) => updateEntry(p, k, v),
@@ -420,17 +443,8 @@ export function PascodeStep({
               )}
             </>
           ) : (
-            <div className="space-y-4">
-              <div className="p-3 bg-slate-50 rounded-lg">
-                <p className="text-sm font-medium text-slate-900">
-                  PASCODE: {pascodes[0]}
-                </p>
-                {pascodeUnitMap[pascodes[0]] ? (
-                  <p className="text-sm text-slate-600">
-                    Unit: {pascodeUnitMap[pascodes[0]]}
-                  </p>
-                ) : null}
-              </div>
+            <div className="space-y-5">
+              {pascodeBanner(pascodes[0], false)}
               {renderForm(
                 entries[pascodes[0]] ?? blankEntry(),
                 (k, v) => updateEntry(pascodes[0], k, v),
@@ -440,32 +454,31 @@ export function PascodeStep({
           )}
 
           {sessionData.senior_rater_needed ? (
-            <div className="space-y-4 mt-6 pt-6 border-t-2 border-blue-200">
-              <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
-                <p className="text-base font-semibold text-blue-900">
-                  Small Unit Senior Rater
-                </p>
-                <p className="text-sm text-blue-700 mt-1">
-                  Required for units with special senior rater requirements
-                </p>
-              </div>
+            <div className="space-y-5 border-t border-line pt-5">
+              <Alert tone="info" title="Small unit senior rater">
+                Required for units with special senior rater requirements.
+              </Alert>
               {renderForm(smallUnitSr, updateSmallUnitSr)}
             </div>
           ) : null}
+        </CardBody>
 
-          <div className="flex justify-end pt-4 border-t">
-            <Button
-              type="submit"
-              size="lg"
-              disabled={!canSubmit() || submitting}
-              loading={submitting}
-              leftIcon={<FileCheck2 className="w-5 h-5" />}
-            >
-              {submitting ? "Generating PDF..." : "Generate PDF"}
-            </Button>
-          </div>
-        </form>
-      </CardBody>
+        <CardFooter className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-xs text-fg-muted">
+            {ready
+              ? "All required fields are complete."
+              : "Complete the required (*) fields for every PASCODE to continue."}
+          </p>
+          <Button
+            type="submit"
+            disabled={!ready || submitting}
+            loading={submitting}
+            leftIcon={<FileCheck2 className="h-4 w-4" />}
+          >
+            {submitting ? "Generating PDF…" : "Generate PDF"}
+          </Button>
+        </CardFooter>
+      </form>
     </Card>
   );
 }

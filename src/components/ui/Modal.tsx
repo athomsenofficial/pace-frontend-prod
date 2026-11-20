@@ -1,4 +1,4 @@
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useId, useRef, type ReactNode } from "react";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -13,11 +13,14 @@ interface ModalProps {
 }
 
 const sizeClasses = {
-  sm: "max-w-md",
-  md: "max-w-lg",
-  lg: "max-w-2xl",
-  xl: "max-w-4xl",
+  sm: "sm:max-w-md",
+  md: "sm:max-w-lg",
+  lg: "sm:max-w-2xl",
+  xl: "sm:max-w-4xl",
 };
+
+const FOCUSABLE =
+  'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]):not([type="hidden"]):not([tabindex="-1"]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
 export function Modal({
   open,
@@ -28,52 +31,107 @@ export function Modal({
   footer,
   size = "md",
 }: ModalProps) {
+  const titleId = useId();
+  const descId = useId();
+  const panelRef = useRef<HTMLDivElement>(null);
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
+
+  // Escape to close, Tab trapped inside the dialog.
   useEffect(() => {
     if (!open) return;
     const handler = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape") {
+        onCloseRef.current();
+        return;
+      }
+      if (e.key !== "Tab" || !panelRef.current) return;
+      const nodes = Array.from(
+        panelRef.current.querySelectorAll<HTMLElement>(FOCUSABLE),
+      ).filter((n) => n.offsetParent !== null);
+      if (nodes.length === 0) return;
+      const first = nodes[0];
+      const last = nodes[nodes.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
     };
     document.addEventListener("keydown", handler);
     return () => document.removeEventListener("keydown", handler);
-  }, [open, onClose]);
+  }, [open]);
+
+  // Move focus into the dialog, lock page scroll, restore focus on close.
+  useEffect(() => {
+    if (!open) return;
+    const previouslyFocused = document.activeElement as HTMLElement | null;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const t = window.setTimeout(() => {
+      const panel = panelRef.current;
+      if (!panel) return;
+      const firstField = panel.querySelector<HTMLElement>(
+        "input:not([type=hidden]):not([tabindex='-1']), select, textarea",
+      );
+      (firstField ?? panel).focus();
+    }, 0);
+    return () => {
+      window.clearTimeout(t);
+      document.body.style.overflow = prevOverflow;
+      previouslyFocused?.focus?.();
+    };
+  }, [open]);
 
   if (!open) return null;
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60"
+      className="fixed inset-0 z-50 flex animate-fade-in items-end justify-center bg-slate-950/60 p-0 backdrop-blur-[2px] sm:items-center sm:p-4"
       onClick={onClose}
     >
       <div
+        ref={panelRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={title ? titleId : undefined}
+        aria-describedby={description ? descId : undefined}
+        tabIndex={-1}
         className={cn(
-          "bg-white rounded-lg shadow-xl w-full max-h-[90vh] flex flex-col",
+          "flex max-h-[92vh] w-full animate-dialog-in flex-col rounded-t-xl border border-line bg-surface shadow-overlay focus:outline-none sm:max-h-[90vh] sm:rounded-xl",
           sizeClasses[size],
         )}
         onClick={(e) => e.stopPropagation()}
       >
-        {(title || description) && (
-          <div className="px-6 py-4 border-b border-slate-200 flex items-start justify-between gap-4">
-            <div>
-              {title ? (
-                <h3 className="text-lg font-semibold text-navy-900">{title}</h3>
-              ) : null}
-              {description ? (
-                <p className="text-sm text-slate-600 mt-1">{description}</p>
-              ) : null}
-            </div>
-            <button
-              type="button"
-              onClick={onClose}
-              className="text-slate-400 hover:text-slate-700"
-              aria-label="Close"
-            >
-              <X className="h-5 w-5" />
-            </button>
+        <div className="flex items-start justify-between gap-4 border-b border-line px-4 py-4 sm:px-6">
+          <div className="min-w-0">
+            {title ? (
+              <h2 id={titleId} className="text-base font-semibold leading-6 text-fg">
+                {title}
+              </h2>
+            ) : null}
+            {description ? (
+              <p id={descId} className="mt-1 text-[13px] leading-5 text-fg-muted">
+                {description}
+              </p>
+            ) : null}
           </div>
-        )}
-        <div className="px-6 py-4 overflow-y-auto flex-1">{children}</div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="-mr-1.5 -mt-0.5 rounded-md p-1.5 text-fg-subtle transition-colors hover:bg-surface-hover hover:text-fg"
+            aria-label="Close dialog"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+        <div className="scroll-thin flex-1 overflow-y-auto px-4 py-5 sm:px-6">
+          {children}
+        </div>
         {footer ? (
-          <div className="px-6 py-4 border-t border-slate-200 bg-slate-50 flex justify-end gap-2">
+          <div className="flex flex-col-reverse gap-2 rounded-b-xl border-t border-line bg-surface-muted px-4 py-3 sm:flex-row sm:justify-end sm:px-6 [&>button]:w-full sm:[&>button]:w-auto">
             {footer}
           </div>
         ) : null}

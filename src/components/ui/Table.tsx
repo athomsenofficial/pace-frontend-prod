@@ -1,81 +1,197 @@
-import type { HTMLAttributes, ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  type CSSProperties,
+  type HTMLAttributes,
+  type ReactNode,
+  type TdHTMLAttributes,
+  type ThHTMLAttributes,
+} from "react";
+import { ArrowDown, ArrowUp, ArrowUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
+
+interface TableContextValue {
+  dense: boolean;
+  zebra: boolean;
+}
+
+const TableContext = createContext<TableContextValue>({ dense: false, zebra: false });
 
 interface TableProps extends HTMLAttributes<HTMLTableElement> {
   children: ReactNode;
+  /** Classes for the scroll container (border, radius, max-height…). */
+  containerClassName?: string;
+  /** Cap the height so the body scrolls under a sticky header (e.g. "65vh"). */
+  maxHeight?: CSSProperties["maxHeight"];
+  /** Tighter row padding for data-heavy tables. */
+  dense?: boolean;
+  /** Alternate row shading. */
+  zebra?: boolean;
 }
 
-export function Table({ className, children, ...rest }: TableProps) {
+export function Table({
+  className,
+  containerClassName,
+  maxHeight,
+  dense = false,
+  zebra = false,
+  children,
+  ...rest
+}: TableProps) {
   return (
-    <div className="overflow-x-auto border border-slate-200 rounded-lg">
-      <table
-        className={cn("min-w-full divide-y divide-slate-200", className)}
-        {...rest}
+    <TableContext.Provider value={{ dense, zebra }}>
+      <div
+        className={cn(
+          "scroll-thin relative w-full overflow-auto rounded-lg border border-line bg-surface",
+          containerClassName,
+        )}
+        style={maxHeight ? { maxHeight } : undefined}
       >
-        {children}
-      </table>
-    </div>
+        <table
+          className={cn(
+            "w-full min-w-full border-separate border-spacing-0 text-left",
+            className,
+          )}
+          {...rest}
+        >
+          {children}
+        </table>
+      </div>
+    </TableContext.Provider>
   );
 }
 
 export function THead({ children }: { children: ReactNode }) {
-  return <thead className="bg-slate-50">{children}</thead>;
+  return <thead>{children}</thead>;
 }
 
 export function TBody({ children }: { children: ReactNode }) {
+  const { zebra } = useContext(TableContext);
   return (
-    <tbody className="divide-y divide-slate-200 bg-white">{children}</tbody>
+    <tbody
+      className={cn(
+        "[&>tr:last-child>td]:border-b-0 [&>tr:hover>td]:!bg-surface-hover",
+        zebra && "[&>tr:nth-child(even)>td]:bg-surface-muted/70",
+      )}
+    >
+      {children}
+    </tbody>
   );
 }
 
-export function TR({
-  children,
-  className,
-  onClick,
-}: {
+interface TRProps extends HTMLAttributes<HTMLTableRowElement> {
   children: ReactNode;
   className?: string;
   onClick?: () => void;
-}) {
+  selected?: boolean;
+}
+
+export function TR({ children, className, onClick, selected, ...rest }: TRProps) {
   return (
     <tr
-      className={cn(onClick && "hover:bg-slate-50 cursor-pointer", className)}
+      className={cn(
+        onClick && "cursor-pointer",
+        selected && "[&>td]:bg-primary-soft/60",
+        className,
+      )}
       onClick={onClick}
+      {...rest}
     >
       {children}
     </tr>
   );
 }
 
+type Align = "left" | "center" | "right";
+
+const alignClass: Record<Align, string> = {
+  left: "text-left",
+  center: "text-center",
+  right: "text-right",
+};
+
+interface THProps extends Omit<ThHTMLAttributes<HTMLTableCellElement>, "align"> {
+  children?: ReactNode;
+  className?: string;
+  align?: Align;
+  /** Right-align (numbers). */
+  numeric?: boolean;
+  /** Current sort direction for this column (renders a sort button when onSort is set). */
+  sort?: "asc" | "desc" | null;
+  onSort?: () => void;
+}
+
 export function TH({
   children,
   className,
-}: {
-  children: ReactNode;
-  className?: string;
-}) {
+  align,
+  numeric,
+  sort,
+  onSort,
+  ...rest
+}: THProps) {
+  const { dense } = useContext(TableContext);
+  const a: Align = align ?? (numeric ? "right" : "left");
+  const SortIcon = sort === "asc" ? ArrowUp : sort === "desc" ? ArrowDown : ArrowUpDown;
   return (
     <th
       scope="col"
+      aria-sort={
+        sort === "asc" ? "ascending" : sort === "desc" ? "descending" : undefined
+      }
       className={cn(
-        "px-4 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-slate-600",
+        "sticky top-0 z-10 whitespace-nowrap border-b border-line bg-surface-muted",
+        "text-2xs font-semibold uppercase tracking-[0.06em] text-fg-muted",
+        dense ? "px-3 py-2" : "px-4 py-2.5",
+        alignClass[a],
         className,
       )}
+      {...rest}
     >
-      {children}
+      {onSort ? (
+        <button
+          type="button"
+          onClick={onSort}
+          className={cn(
+            "-mx-1 inline-flex items-center gap-1 rounded px-1 uppercase hover:text-fg",
+            a === "right" && "flex-row-reverse",
+          )}
+        >
+          {children}
+          <SortIcon
+            className={cn("h-3 w-3", sort ? "text-fg" : "text-fg-subtle/70")}
+            aria-hidden="true"
+          />
+        </button>
+      ) : (
+        children
+      )}
     </th>
   );
 }
 
-export function TD({
-  children,
-  className,
-}: {
-  children: ReactNode;
+interface TDProps extends Omit<TdHTMLAttributes<HTMLTableCellElement>, "align"> {
+  children?: ReactNode;
   className?: string;
-}) {
+  align?: Align;
+  /** Right-align with tabular figures (numbers). */
+  numeric?: boolean;
+}
+
+export function TD({ children, className, align, numeric, ...rest }: TDProps) {
+  const { dense } = useContext(TableContext);
+  const a: Align = align ?? (numeric ? "right" : "left");
   return (
-    <td className={cn("px-4 py-2.5 text-sm text-slate-700", className)}>
+    <td
+      className={cn(
+        "border-b border-line align-middle text-sm text-fg",
+        dense ? "px-3 py-2" : "px-4 py-2.5",
+        alignClass[a],
+        numeric && "tabular-nums",
+        className,
+      )}
+      {...rest}
+    >
       {children}
     </td>
   );

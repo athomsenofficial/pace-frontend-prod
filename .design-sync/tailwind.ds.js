@@ -3,7 +3,7 @@
 // the full brand + semantic color palette (bg/text/border/ring, incl. hover/
 // focus/active) so designs the Claude Design agent builds can use the whole
 // on-brand vocabulary — not just the classes the 8 components happen to emit.
-import base from "../tailwind.config.js";
+import base from "../tailwind.config.cjs";
 
 export default {
   ...base,

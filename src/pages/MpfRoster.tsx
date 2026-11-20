@@ -1,8 +1,20 @@
 import { useEffect, useState } from "react";
-import { ArrowRight, Download, FileText, FileSpreadsheet, Files } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  CheckCircle2,
+  Download,
+  FileText,
+  FileSpreadsheet,
+  Files,
+  RotateCcw,
+} from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
-import { Card, CardBody } from "@/components/ui/Card";
+import { Card, CardBody, CardFooter, CardHeader } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
+import { Alert } from "@/components/ui/Alert";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { Page } from "@/components/Page";
 import { StepIndicator } from "@/features/mel/StepIndicator";
 import { UploadStep } from "@/features/mel/UploadStep";
 import { ReviewStep } from "@/features/mel/ReviewStep";
@@ -40,21 +52,21 @@ interface FormatOption {
 const FORMAT_OPTIONS: FormatOption[] = [
   {
     value: "list",
-    icon: <FileSpreadsheet className="w-5 h-5 text-primary" />,
+    icon: <FileSpreadsheet className="h-5 w-5" />,
     label: "MPF List Only",
     desc: "Simple roster listing: Name, Grade, Unit, DAFSC, DOR, TAFMSD",
     filenameTag: "MPF_List",
   },
   {
     value: "mel",
-    icon: <FileText className="w-5 h-5 text-success" />,
+    icon: <FileText className="h-5 w-5" />,
     label: "MEL Format Only",
     desc: "Master Eligibility List format with full eligibility determinations",
     filenameTag: "MEL",
   },
   {
     value: "both",
-    icon: <Files className="w-5 h-5 text-accent" />,
+    icon: <Files className="h-5 w-5" />,
     label: "MPF List + MEL",
     desc: "MPF List and MEL merged into a single PDF document",
     filenameTag: "MPF_Both",
@@ -138,19 +150,19 @@ export default function MpfRoster() {
   }, [step]);
 
   return (
-    <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-      <div>
-        <div className="flex flex-wrap items-center gap-3">
-          <h1 className="text-3xl font-bold text-slate-900">
-            MPF Roster Distribution
-          </h1>
-          <Badge color="navy">Step {step + 1} of 4</Badge>
-        </div>
-        <p className="text-slate-600 mt-2">
-          Upload a roster to generate an MPF list, MEL format, or both as a
-          merged PDF.
-        </p>
-      </div>
+    <Page>
+      <PageHeader
+        eyebrow="Promotions"
+        title="MPF Roster Distribution"
+        badge={
+          session ? (
+            <Badge color="navy">
+              {session.cycle} · {session.year}
+            </Badge>
+          ) : null
+        }
+        description="Upload a roster to generate an MPF list, MEL format, or both as a merged PDF."
+      />
 
       <StepIndicator steps={STEPS} current={step} />
 
@@ -193,105 +205,122 @@ export default function MpfRoster() {
       ) : null}
 
       {step === 2 && session ? (
-        <div className="space-y-4">
-          <Card>
-            <CardBody>
-              <h2 className="text-xl font-semibold text-slate-900">
-                MPF Roster Output Formats
-              </h2>
-              <p className="text-sm text-slate-600">
-                This tool generates up to two separate documents. Pick the
-                format your MPF needs.
-              </p>
-            </CardBody>
-          </Card>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {FORMAT_OPTIONS.map((opt) => {
-              const selected = format === opt.value;
-              return (
-                <button
-                  key={opt.value}
-                  type="button"
-                  onClick={() => setFormat(opt.value)}
-                  className={cn(
-                    "rounded-lg border-2 bg-white text-left p-5 transition-colors",
-                    selected
-                      ? "border-primary/30 bg-primary/5"
-                      : "border-slate-200 hover:border-slate-300",
-                  )}
-                >
-                  <div className="flex items-center gap-2 mb-2">
-                    {opt.icon}
-                    <span className="font-semibold text-slate-900">
-                      {opt.label}
-                    </span>
-                  </div>
-                  <p className="text-sm text-slate-600">{opt.desc}</p>
-                </button>
-              );
-            })}
-          </div>
-
-          {error ? (
-            <div className="rounded-md bg-danger/10 border border-danger/30 px-3 py-2 text-sm text-danger">
-              {error}
+        <Card>
+          <CardHeader
+            title="Output format"
+            description="This tool generates up to two separate documents. Pick the format your MPF needs."
+          />
+          <CardBody className="space-y-4">
+            <div
+              role="radiogroup"
+              aria-label="Output format"
+              className="grid grid-cols-1 gap-3 md:grid-cols-3"
+            >
+              {FORMAT_OPTIONS.map((opt) => {
+                const selected = format === opt.value;
+                return (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    role="radio"
+                    aria-checked={selected}
+                    onClick={() => setFormat(opt.value)}
+                    className={cn(
+                      "relative rounded-lg border bg-surface p-4 text-left transition-colors",
+                      selected
+                        ? "border-primary ring-1 ring-primary dark:border-primary-text dark:ring-primary-text"
+                        : "border-line hover:border-line-strong/60 hover:bg-surface-hover",
+                    )}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <span
+                        className={cn(
+                          "flex h-8 w-8 items-center justify-center rounded-md",
+                          selected
+                            ? "bg-primary text-primary-fg"
+                            : "bg-surface-hover text-fg-muted",
+                        )}
+                      >
+                        {opt.icon}
+                      </span>
+                      <span className="text-sm font-semibold text-fg">{opt.label}</span>
+                      {selected ? (
+                        <CheckCircle2
+                          className="ml-auto h-4 w-4 text-primary-text"
+                          aria-hidden="true"
+                        />
+                      ) : null}
+                    </div>
+                    <p className="mt-2 text-[13px] leading-5 text-fg-muted">{opt.desc}</p>
+                  </button>
+                );
+              })}
             </div>
-          ) : null}
 
-          <div className="flex justify-between">
-            <Button variant="outline" onClick={() => setStep(1)} disabled={submitting}>
-              Back
+            {error ? (
+              <Alert tone="danger" onDismiss={() => setError(null)}>
+                {error}
+              </Alert>
+            ) : null}
+          </CardBody>
+          <CardFooter className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-between">
+            <Button
+              variant="ghost"
+              onClick={() => setStep(1)}
+              disabled={submitting}
+              leftIcon={<ArrowLeft className="h-4 w-4" />}
+            >
+              Back to review
             </Button>
             <Button
-              variant="primary"
-              size="lg"
               onClick={generate}
               loading={submitting}
               rightIcon={<ArrowRight className="h-4 w-4" />}
             >
               Generate PDF
             </Button>
-          </div>
-        </div>
+          </CardFooter>
+        </Card>
       ) : null}
 
       {step === 3 && session ? (
         <Card>
-          <CardBody className="space-y-6 text-center py-10">
-            <div className="mx-auto h-16 w-16 rounded-full bg-success/10 flex items-center justify-center">
-              <FileText className="h-8 w-8 text-success" />
-            </div>
-            <div>
-              <h2 className="text-2xl font-semibold text-slate-900">
-                Your MPF Roster is ready
-              </h2>
-              <p className="text-sm text-slate-600 mt-2 max-w-xl mx-auto">
-                Select a format and download your MPF roster PDF.
-              </p>
-            </div>
+          <CardBody className="flex flex-col items-center px-6 py-10 text-center">
+            <span className="flex h-12 w-12 items-center justify-center rounded-full bg-success-soft text-success">
+              <FileText className="h-6 w-6" aria-hidden="true" />
+            </span>
+            <h2 className="mt-4 text-lg font-semibold text-fg">Your MPF roster is ready</h2>
+            <p className="mt-1 max-w-md text-sm text-fg-muted">
+              Format:{" "}
+              <span className="font-medium text-fg">
+                {FORMAT_OPTIONS.find((f) => f.value === format)?.label}
+              </span>
+              . {downloaded ? "The download should have started automatically." : "Downloading…"}
+            </p>
             {error ? (
-              <div className="rounded-md bg-danger/10 border border-danger/30 px-3 py-2 text-sm text-danger max-w-md mx-auto">
+              <Alert tone="danger" className="mt-5 w-full max-w-md text-left">
                 {error}
-              </div>
+              </Alert>
             ) : null}
-            <div className="flex justify-center gap-3 flex-wrap">
+            <div className="mt-6 flex w-full max-w-md flex-col-reverse gap-2 sm:flex-row sm:justify-center">
               <Button
-                variant="primary"
-                size="lg"
+                variant="outline"
+                onClick={reset}
+                leftIcon={<RotateCcw className="h-4 w-4" />}
+              >
+                Start a new session
+              </Button>
+              <Button
                 onClick={download}
                 loading={downloading}
                 leftIcon={<Download className="h-4 w-4" />}
               >
                 {downloaded ? "Download again" : "Download PDF"}
               </Button>
-              <Button variant="outline" size="lg" onClick={reset}>
-                Start a new session
-              </Button>
             </div>
           </CardBody>
         </Card>
       ) : null}
-    </div>
+    </Page>
   );
 }

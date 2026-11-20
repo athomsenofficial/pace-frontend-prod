@@ -13,6 +13,12 @@ import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
+import { Alert } from "@/components/ui/Alert";
+import { Card, CardBody, CardHeader } from "@/components/ui/Card";
+import { controlClasses } from "@/components/ui/Field";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { Page } from "@/components/Page";
+import { cn } from "@/lib/utils";
 import { apiClient } from "@/lib/api";
 import {
   downloadBlob,
@@ -54,7 +60,7 @@ const MEMO_TYPES = [
   { value: "for", label: "MEMORANDUM FOR [Recipient]" },
 ];
 
-const INDENT_CLASSES = ["", "ml-6", "ml-12"];
+const INDENT_CLASSES = ["", "ml-4 sm:ml-6", "ml-8 sm:ml-12"];
 
 const ALL_RANKS = [
   { group: "Officer", options: OFFICER_RANKS },
@@ -376,29 +382,17 @@ export default function MemoGenerator() {
   /* ---- render ---- */
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="mb-8">
-        <div className="flex items-center gap-3 mb-1 flex-wrap">
-          <div
-            className="p-2 rounded-lg"
-            style={{ backgroundColor: "rgba(47,84,150,0.1)" }}
-          >
-            <FileText className="w-6 h-6" style={{ color: "#2F5496" }} />
-          </div>
-          <h2 className="text-3xl font-bold text-slate-900">
-            Memorandum Generator
-          </h2>
-          <Badge color="navy">AFH 33-337</Badge>
-        </div>
-        <p className="text-slate-500 text-sm">
-          Generates a properly formatted USAF Memorandum per The Tongue and Quill
-          Chapter 14 — official letterhead, floating Dept seal, T&amp;Q paragraph
-          numbering, right-indented signature block.
-        </p>
-      </div>
+    <Page>
+      <PageHeader
+        eyebrow="Documents"
+        icon={<FileText />}
+        title="Memorandum generator"
+        badge={<Badge color="navy">AFH 33-337</Badge>}
+        description="Generates a properly formatted USAF Memorandum per The Tongue and Quill Chapter 14 — official letterhead, floating Dept seal, T&Q paragraph numbering, right-indented signature block."
+      />
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 space-y-6">
+      <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-3">
+        <div className="min-w-0 space-y-6 lg:col-span-2">
           {/* Letterhead */}
           <SectionCard
             title="Letterhead"
@@ -421,13 +415,13 @@ export default function MemoGenerator() {
                 hint="Unit street address or box number"
               />
               <div>
-                <p className="text-sm font-medium text-slate-700 mb-1">
-                  Address Line 2 — City / State / ZIP{" "}
-                  <span className="text-red-500">*</span>
+                <p className="mb-1.5 text-[13px] font-medium leading-5 text-fg">
+                  Address Line 2 — City / State / ZIP *
                 </p>
-                <div className="grid grid-cols-5 gap-2">
-                  <div className="col-span-2">
+                <div className="grid grid-cols-3 gap-2 sm:grid-cols-5">
+                  <div className="col-span-3 sm:col-span-2">
                     <Input
+                      aria-label="City"
                       placeholder="City"
                       value={form.address_city}
                       onChange={(e) => setField("address_city", e.target.value)}
@@ -435,6 +429,7 @@ export default function MemoGenerator() {
                   </div>
                   <div className="col-span-2">
                     <Select
+                      aria-label="State"
                       value={form.address_state}
                       onChange={(e) =>
                         setField("address_state", e.target.value)
@@ -444,18 +439,20 @@ export default function MemoGenerator() {
                   </div>
                   <div className="col-span-1">
                     <Input
+                      aria-label="ZIP code"
+                      inputMode="numeric"
                       placeholder="ZIP"
                       value={form.address_zip}
                       onChange={(e) => setField("address_zip", e.target.value)}
                     />
                   </div>
                 </div>
-                <p className="text-xs text-slate-400 mt-1">
+                <p className="mt-1.5 text-xs text-fg-subtle">
                   Formats as "CITY STATE ZIP" per T&amp;Q — e.g., LANGLEY AFB VA
                   23665
                 </p>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <Input
                   label="Date *"
                   type="date"
@@ -527,12 +524,13 @@ export default function MemoGenerator() {
                   key={i}
                   className={`flex gap-2 items-start ${INDENT_CLASSES[p.level] ?? ""}`}
                 >
-                  <div className="pt-2 text-xs font-bold text-slate-400 w-7 shrink-0 text-right">
+                  <div className="w-7 shrink-0 pt-2 text-right text-xs font-semibold tabular-nums text-fg-subtle">
                     {labels[i] || ""}
                   </div>
-                  <div className="flex-1 space-y-1">
+                  <div className="min-w-0 flex-1 space-y-1.5">
                     <textarea
-                      className="w-full min-h-[80px] rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 resize-y focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary placeholder:text-slate-400"
+                      aria-label={`Paragraph ${i + 1} text`}
+                      className={cn(controlClasses, "min-h-[80px] resize-y py-2 leading-6")}
                       placeholder={
                         p.level === 0
                           ? i === 0
@@ -546,7 +544,7 @@ export default function MemoGenerator() {
                       onChange={(e) => setParagraph(i, "text", e.target.value)}
                     />
                     <select
-                      className="text-xs rounded border border-slate-200 bg-slate-50 px-2 py-1 text-slate-600 focus:outline-none focus:ring-1 focus:ring-primary/40"
+                      className={LEVEL_SELECT}
                       value={String(p.level)}
                       onChange={(e) =>
                         setParagraph(i, "level", Number(e.target.value))
@@ -562,35 +560,42 @@ export default function MemoGenerator() {
                   </div>
                   {form.paragraphs.length > 1 ? (
                     <button
+                      type="button"
                       onClick={() => removeParagraph(i)}
-                      className="mt-2 p-1.5 rounded-md text-slate-400 hover:text-danger hover:bg-red-50 transition-colors"
+                      className={cn(REMOVE_BTN, "mt-1.5")}
                       title="Remove paragraph"
+                      aria-label={`Remove paragraph ${i + 1}`}
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
                   ) : null}
                 </div>
               ))}
-              <div className="flex items-center gap-3 mt-2 flex-wrap">
-                <button
+              <div className="flex flex-wrap items-center gap-2 pt-1">
+                <Button
+                  variant="secondary"
+                  size="sm"
                   onClick={() => addParagraph(0)}
-                  className="flex items-center gap-1.5 text-sm text-primary font-medium hover:text-primary-dark transition-colors"
+                  leftIcon={<Plus className="h-4 w-4" />}
                 >
-                  <Plus className="w-4 h-4" /> Add paragraph
-                </button>
-                <span className="text-slate-300">|</span>
-                <button
+                  Add paragraph
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
                   onClick={() => addParagraph(1)}
-                  className="flex items-center gap-1.5 text-sm text-slate-500 font-medium hover:text-slate-700 transition-colors"
+                  leftIcon={<ChevronRight className="h-4 w-4" />}
                 >
-                  <ChevronRight className="w-4 h-4" /> Add sub-paragraph
-                </button>
-                <button
+                  Add sub-paragraph
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
                   onClick={() => addParagraph(2)}
-                  className="flex items-center gap-1.5 text-sm text-slate-400 font-medium hover:text-slate-600 transition-colors"
+                  leftIcon={<CornerDownRight className="h-4 w-4" />}
                 >
-                  <CornerDownRight className="w-4 h-4" /> Add sub-sub
-                </button>
+                  Add sub-sub
+                </Button>
               </div>
             </div>
           </SectionCard>
@@ -651,10 +656,11 @@ export default function MemoGenerator() {
             <div className="space-y-2">
               {references.map((r, i) => (
                 <div key={i} className="flex items-center gap-2">
-                  <span className="text-xs font-bold text-slate-400 w-6 shrink-0 text-right">
+                  <span className="w-7 shrink-0 text-right text-xs font-semibold text-fg-subtle">
                     ({String.fromCharCode(97 + i)})
                   </span>
                   <Input
+                    aria-label={`Reference ${String.fromCharCode(97 + i)}`}
                     placeholder={
                       i === 0
                         ? "e.g., AFMAN 33-326, 25 November 2011, Preparing Official Communications"
@@ -665,20 +671,24 @@ export default function MemoGenerator() {
                   />
                   {references.length > 1 ? (
                     <button
+                      type="button"
                       onClick={() => removeReference(i)}
-                      className="p-1.5 rounded-md text-slate-400 hover:text-danger hover:bg-red-50 transition-colors shrink-0"
+                      className={REMOVE_BTN}
+                      aria-label={`Remove reference ${String.fromCharCode(97 + i)}`}
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
                   ) : null}
                 </div>
               ))}
-              <button
+              <Button
+                variant="secondary"
+                size="sm"
                 onClick={addReference}
-                className="flex items-center gap-1.5 text-sm text-primary font-medium hover:text-primary-dark transition-colors mt-1"
+                leftIcon={<Plus className="h-4 w-4" />}
               >
-                <Plus className="w-4 h-4" /> Add reference
-              </button>
+                Add reference
+              </Button>
             </div>
           </ToggleSection>
 
@@ -694,11 +704,12 @@ export default function MemoGenerator() {
               {attachments.map((a, i) => (
                 <div key={i} className="flex items-center gap-2">
                   {attachments.length > 1 ? (
-                    <span className="text-xs font-bold text-slate-400 w-5 shrink-0 text-right">
+                    <span className="w-5 shrink-0 text-right text-xs font-semibold text-fg-subtle">
                       {i + 1}.
                     </span>
                   ) : null}
                   <Input
+                    aria-label={`Attachment ${i + 1}`}
                     placeholder={
                       i === 0
                         ? "e.g., ACC/CC Leave Policy Memo, 30 Jun 14"
@@ -709,20 +720,24 @@ export default function MemoGenerator() {
                   />
                   {attachments.length > 1 ? (
                     <button
+                      type="button"
                       onClick={() => removeAttachment(i)}
-                      className="p-1.5 rounded-md text-slate-400 hover:text-danger hover:bg-red-50 transition-colors shrink-0"
+                      className={REMOVE_BTN}
+                      aria-label={`Remove attachment ${i + 1}`}
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
                   ) : null}
                 </div>
               ))}
-              <button
+              <Button
+                variant="secondary"
+                size="sm"
                 onClick={addAttachment}
-                className="flex items-center gap-1.5 text-sm text-primary font-medium hover:text-primary-dark transition-colors mt-1"
+                leftIcon={<Plus className="h-4 w-4" />}
               >
-                <Plus className="w-4 h-4" /> Add attachment
-              </button>
+                Add attachment
+              </Button>
             </div>
           </ToggleSection>
 
@@ -744,20 +759,22 @@ export default function MemoGenerator() {
                 return (
                   <div
                     key={i}
-                    className="border border-slate-200 rounded-lg p-4 space-y-4 bg-slate-50/50"
+                    className="space-y-4 rounded-lg border border-line bg-surface-muted p-3 sm:p-4"
                   >
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-bold text-slate-700">
+                      <span className="text-sm font-semibold text-fg">
                         {ordinal} Ind
                       </span>
                       <button
+                        type="button"
                         onClick={() => removeEndorsement(i)}
-                        className="p-1.5 rounded-md text-slate-400 hover:text-danger hover:bg-red-50 transition-colors"
+                        className={REMOVE_BTN}
+                        aria-label={`Remove ${ordinal} Ind`}
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                       <Input
                         label="Office Symbol"
                         placeholder="e.g., 1 FW/CC"
@@ -776,21 +793,20 @@ export default function MemoGenerator() {
                       />
                     </div>
                     <div>
-                      <p className="text-xs font-semibold text-slate-600 mb-2">
-                        Body Paragraphs
-                      </p>
+                      <p className="eyebrow mb-2">Body paragraphs</p>
                       <div className="space-y-2">
                         {e.paragraphs.map((p, pi) => (
                           <div
                             key={pi}
                             className={`flex gap-2 items-start ${INDENT_CLASSES[p.level] ?? ""}`}
                           >
-                            <div className="pt-2 text-xs font-bold text-slate-400 w-7 shrink-0 text-right">
+                            <div className="w-7 shrink-0 pt-2 text-right text-xs font-semibold tabular-nums text-fg-subtle">
                               {eLabels[pi] || ""}
                             </div>
-                            <div className="flex-1 space-y-1">
+                            <div className="min-w-0 flex-1 space-y-1.5">
                               <textarea
-                                className="w-full min-h-[64px] rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 resize-y focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary placeholder:text-slate-400"
+                                aria-label={`${ordinal} Ind paragraph ${pi + 1} text`}
+                                className={cn(controlClasses, "min-h-[64px] resize-y py-2 leading-6")}
                                 placeholder="Endorsement paragraph text…"
                                 value={p.text}
                                 onChange={(ev) =>
@@ -803,7 +819,7 @@ export default function MemoGenerator() {
                                 }
                               />
                               <select
-                                className="text-xs rounded border border-slate-200 bg-slate-50 px-2 py-1 text-slate-600 focus:outline-none"
+                                className={LEVEL_SELECT}
                                 value={String(p.level)}
                                 onChange={(ev) =>
                                   setEndorsementParagraph(
@@ -823,36 +839,39 @@ export default function MemoGenerator() {
                             </div>
                             {e.paragraphs.length > 1 ? (
                               <button
+                                type="button"
                                 onClick={() => removeEndorsementParagraph(i, pi)}
-                                className="mt-2 p-1.5 rounded-md text-slate-400 hover:text-danger hover:bg-red-50 transition-colors"
+                                className={cn(REMOVE_BTN, "mt-1.5")}
+                                aria-label={`Remove paragraph ${pi + 1}`}
                               >
                                 <Trash2 className="w-4 h-4" />
                               </button>
                             ) : null}
                           </div>
                         ))}
-                        <div className="flex items-center gap-3 mt-1 flex-wrap">
-                          <button
+                        <div className="flex flex-wrap items-center gap-2 pt-1">
+                          <Button
+                            variant="secondary"
+                            size="sm"
                             onClick={() => addEndorsementParagraph(i, 0)}
-                            className="flex items-center gap-1.5 text-xs text-primary font-medium hover:text-primary-dark transition-colors"
+                            leftIcon={<Plus className="h-4 w-4" />}
                           >
-                            <Plus className="w-3 h-3" /> Add paragraph
-                          </button>
-                          <span className="text-slate-300">|</span>
-                          <button
+                            Add paragraph
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
                             onClick={() => addEndorsementParagraph(i, 1)}
-                            className="flex items-center gap-1.5 text-xs text-slate-500 font-medium hover:text-slate-700 transition-colors"
+                            leftIcon={<ChevronRight className="h-4 w-4" />}
                           >
-                            <ChevronRight className="w-3 h-3" /> Sub-paragraph
-                          </button>
+                            Sub-paragraph
+                          </Button>
                         </div>
                       </div>
                     </div>
                     <div>
-                      <p className="text-xs font-semibold text-slate-600 mb-2">
-                        Signature Block
-                      </p>
-                      <div className="grid grid-cols-2 gap-3">
+                      <p className="eyebrow mb-2">Signature block</p>
+                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                         <Input
                           label="Full Name"
                           placeholder="e.g., Jane B. Doe"
@@ -914,9 +933,9 @@ export default function MemoGenerator() {
                       </div>
                     </div>
                     <div>
-                      <p className="text-xs font-semibold text-slate-600 mb-2">
+                      <p className="eyebrow mb-2">
                         Attachments for this endorsement{" "}
-                        <span className="font-normal text-slate-400">
+                        <span className="font-normal normal-case tracking-normal">
                           (optional)
                         </span>
                       </p>
@@ -924,11 +943,12 @@ export default function MemoGenerator() {
                         {e.attachments.map((a, ai) => (
                           <div key={ai} className="flex items-center gap-2">
                             {e.attachments.length > 1 ? (
-                              <span className="text-xs font-bold text-slate-400 w-5 shrink-0 text-right">
+                              <span className="w-5 shrink-0 text-right text-xs font-semibold text-fg-subtle">
                                 {ai + 1}.
                               </span>
                             ) : null}
                             <Input
+                              aria-label={`${ordinal} Ind attachment ${ai + 1}`}
                               placeholder="e.g., Unit Training Report, 15 Mar 26"
                               value={a}
                               onChange={(ev) =>
@@ -937,58 +957,75 @@ export default function MemoGenerator() {
                             />
                             {e.attachments.length > 1 ? (
                               <button
+                                type="button"
                                 onClick={() =>
                                   removeEndorsementAttachment(i, ai)
                                 }
-                                className="p-1.5 rounded-md text-slate-400 hover:text-danger hover:bg-red-50 transition-colors shrink-0"
+                                className={REMOVE_BTN}
+                                aria-label={`Remove attachment ${ai + 1}`}
                               >
                                 <Trash2 className="w-4 h-4" />
                               </button>
                             ) : null}
                           </div>
                         ))}
-                        <button
+                        <Button
+                          variant="ghost"
+                          size="sm"
                           onClick={() => addEndorsementAttachment(i)}
-                          className="flex items-center gap-1.5 text-xs text-primary font-medium hover:text-primary-dark transition-colors"
+                          leftIcon={<Plus className="h-4 w-4" />}
                         >
-                          <Plus className="w-3 h-3" /> Add attachment
-                        </button>
+                          Add attachment
+                        </Button>
                       </div>
                     </div>
                   </div>
                 );
               })}
-              <button
+              <Button
+                variant="secondary"
+                size="sm"
                 onClick={addEndorsement}
-                className="flex items-center gap-1.5 text-sm text-primary font-medium hover:text-primary-dark transition-colors"
+                leftIcon={<Plus className="h-4 w-4" />}
               >
-                <Plus className="w-4 h-4" /> Add endorsement
-              </button>
+                Add endorsement
+              </Button>
             </div>
           </ToggleSection>
 
           {error ? (
-            <div className="flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
-              <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
+            <Alert tone="danger" title="Couldn't generate the memorandum" onDismiss={() => setError(null)}>
               {error}
-            </div>
+            </Alert>
           ) : null}
 
-          <Button
-            variant="primary"
-            size="lg"
-            className="w-full"
-            disabled={!canSubmit || submitting}
-            loading={submitting}
-            onClick={submit}
-            leftIcon={<Download className="w-5 h-5" />}
-          >
-            {submitting ? "Generating Word Doc…" : "Generate & Download Word Doc"}
-          </Button>
+          <Card className="sticky bottom-0 z-10 shadow-raised lg:static lg:shadow-card">
+            <CardBody className="flex flex-col gap-3 py-3 sm:flex-row sm:items-center sm:justify-between">
+              <p className="flex items-center gap-2 text-xs text-fg-muted">
+                {canSubmit ? (
+                  "Ready — generates a Word document (.docx)."
+                ) : (
+                  <>
+                    <AlertCircle className="h-4 w-4 shrink-0 text-fg-subtle" aria-hidden="true" />
+                    Complete the required (*) fields to generate.
+                  </>
+                )}
+              </p>
+              <Button
+                size="lg"
+                disabled={!canSubmit || submitting}
+                loading={submitting}
+                onClick={submit}
+                leftIcon={<Download className="h-4 w-4" />}
+              >
+                {submitting ? "Generating Word Doc…" : "Generate & Download Word Doc"}
+              </Button>
+            </CardBody>
+          </Card>
         </div>
 
         {/* Sidebar */}
-        <div className="space-y-6">
+        <div className="space-y-6 lg:sticky lg:top-20">
           <Preview
             form={form}
             references={references}
@@ -996,8 +1033,8 @@ export default function MemoGenerator() {
             showReferences={showReferences}
             showAttachments={showAttachments}
           />
-          <SidebarCard title="AFH 33-337 Ch. 14 Reference" tinted>
-            <div className="space-y-3 text-xs text-slate-600">
+          <SidebarCard title="AFH 33-337 Ch. 14 reference">
+            <dl className="divide-y divide-line text-xs">
               {[
                 { label: "Font", value: "12pt Times New Roman" },
                 { label: "Margins", value: "1 inch all sides" },
@@ -1010,34 +1047,38 @@ export default function MemoGenerator() {
               ].map((kv) => (
                 <div
                   key={kv.label}
-                  className="flex justify-between items-start gap-2"
+                  className="flex items-start justify-between gap-3 py-1.5"
                 >
-                  <span className="font-semibold text-slate-700 shrink-0">
-                    {kv.label}
-                  </span>
-                  <span className="text-right">{kv.value}</span>
+                  <dt className="shrink-0 font-medium text-fg">{kv.label}</dt>
+                  <dd className="text-right text-fg-muted">{kv.value}</dd>
                 </div>
               ))}
-            </div>
+            </dl>
           </SidebarCard>
           <SidebarCard title="Tips">
-            <ul className="space-y-2 text-xs text-slate-600">
+            <ul className="list-disc space-y-1.5 pl-4 text-xs leading-5 text-fg-muted marker:text-fg-subtle">
               <li>
-                • Name format: <strong>First MI Last</strong> (e.g., John A. Smith)
+                Name format: <strong className="text-fg">First MI Last</strong> (e.g., John A. Smith)
               </li>
-              <li>• Single paragraph = no number; 2+ paragraphs = auto-numbered</li>
-              <li>• Sub-paragraphs (a, b, c) reset under each new main paragraph</li>
-              <li>• APO/FPO addresses: select AE, AP, or AA as the state</li>
-              <li>• Civilians: select GS grade and DAF as branch</li>
+              <li>Single paragraph = no number; 2+ paragraphs = auto-numbered</li>
+              <li>Sub-paragraphs (a, b, c) reset under each new main paragraph</li>
+              <li>APO/FPO addresses: select AE, AP, or AA as the state</li>
+              <li>Civilians: select GS grade and DAF as branch</li>
             </ul>
           </SidebarCard>
         </div>
       </div>
-    </div>
+    </Page>
   );
 }
 
 /* ----------------------------- helper components ----------------------------- */
+
+const LEVEL_SELECT =
+  "h-7 rounded-md border border-line-strong/50 bg-surface-muted px-2 text-xs text-fg-muted hover:border-line-strong focus:border-focus focus:outline-none focus:ring-2 focus:ring-focus/25";
+
+const REMOVE_BTN =
+  "shrink-0 rounded-md p-1.5 text-fg-subtle transition-colors hover:bg-danger-soft hover:text-danger";
 
 function SectionCard({
   title,
@@ -1049,23 +1090,20 @@ function SectionCard({
   children: React.ReactNode;
 }) {
   return (
-    <div className="bg-white border border-slate-200 rounded-xl shadow-sm">
-      <div className="border-b border-slate-200 px-6 py-4">
-        <h3 className="text-lg font-semibold text-slate-900">{title}</h3>
-        <p className="text-sm text-slate-500">{description}</p>
-      </div>
-      <div className="px-6 py-6">{children}</div>
-    </div>
+    <Card>
+      <CardHeader title={title} description={description} />
+      <CardBody className="py-5">{children}</CardBody>
+    </Card>
   );
 }
 
 function StepHeader({ number, title }: { number: number; title: string }) {
   return (
-    <div className="flex items-center gap-3 mb-4">
-      <span className="w-7 h-7 rounded-full bg-primary text-white text-xs font-black flex items-center justify-center shrink-0">
+    <div className="mb-4 flex items-center gap-2.5">
+      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-semibold tabular-nums text-primary-fg">
         {number}
       </span>
-      <h3 className="font-bold text-slate-800">{title}</h3>
+      <h4 className="text-sm font-semibold text-fg">{title}</h4>
     </div>
   );
 }
@@ -1084,49 +1122,45 @@ function ToggleSection({
   children: React.ReactNode;
 }) {
   return (
-    <div className="bg-white border border-slate-200 rounded-xl shadow-sm">
-      <div className="border-b border-slate-200 px-6 py-4">
-        <label className="flex items-center gap-3 cursor-pointer select-none">
+    <Card>
+      <div className={cn("px-4 py-3.5 sm:px-5", checked && "border-b border-line")}>
+        <label className="flex cursor-pointer select-none items-start gap-3">
           <input
             type="checkbox"
             checked={checked}
             onChange={(e: ChangeEvent<HTMLInputElement>) =>
               onChange(e.target.checked)
             }
-            className="w-4 h-4 rounded accent-primary"
+            className="mt-1 h-4 w-4 shrink-0 rounded border-line-strong accent-[rgb(var(--primary))]"
           />
-          <span className="text-lg font-semibold text-slate-900">{title}</span>
-          <span className="text-xs font-normal text-slate-400">(optional)</span>
+          <span className="min-w-0">
+            <span className="flex flex-wrap items-baseline gap-x-2">
+              <span className="text-[15px] font-semibold text-fg">{title}</span>
+              <span className="text-xs text-fg-subtle">Optional</span>
+            </span>
+            <span className="mt-0.5 block text-[13px] leading-5 text-fg-muted">
+              {description}
+            </span>
+          </span>
         </label>
-        <p className="text-sm text-slate-500 mt-1">{description}</p>
       </div>
-      {checked ? <div className="px-6 py-6">{children}</div> : null}
-    </div>
+      {checked ? <CardBody className="py-5">{children}</CardBody> : null}
+    </Card>
   );
 }
 
 function SidebarCard({
   title,
-  tinted,
   children,
 }: {
   title: string;
-  tinted?: boolean;
   children: React.ReactNode;
 }) {
   return (
-    <div
-      className={`border rounded-xl shadow-sm ${
-        tinted
-          ? "bg-primary/5 border-primary/30"
-          : "bg-white border-slate-200"
-      }`}
-    >
-      <div className="border-b border-slate-200/60 px-5 py-3">
-        <h4 className="text-sm font-bold text-slate-800">{title}</h4>
-      </div>
-      <div className="px-5 py-4">{children}</div>
-    </div>
+    <Card>
+      <CardHeader className="py-3" title={<span className="text-sm">{title}</span>} />
+      <CardBody className="py-3">{children}</CardBody>
+    </Card>
   );
 }
 
@@ -1171,16 +1205,15 @@ function Preview({
   const atts = showAttachments ? attachments.filter((a) => a.trim()) : [];
 
   return (
-    <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
-      <div className="bg-slate-50 border-b border-slate-200 px-4 py-2 flex items-center gap-2">
-        <FileStack className="w-4 h-4 text-slate-400" />
-        <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-          Preview
-        </span>
+    <Card className="overflow-hidden">
+      <div className="flex items-center gap-2 border-b border-line bg-surface-muted px-4 py-2.5">
+        <FileStack className="h-4 w-4 text-fg-subtle" aria-hidden="true" />
+        <span className="eyebrow">Live preview</span>
       </div>
-      <div className="p-6 font-mono text-[10px] leading-relaxed text-slate-700 space-y-2">
+      <div className="bg-surface-hover p-3">
+      <div className="space-y-2 rounded-sm bg-white p-5 font-serif text-[10px] leading-relaxed text-slate-800 shadow-card ring-1 ring-slate-900/5">
         <div className="text-center space-y-0.5">
-          <div className="w-8 h-8 rounded-full bg-slate-200 mx-auto mb-1 flex items-center justify-center">
+          <div className="mx-auto mb-1 flex h-8 w-8 items-center justify-center rounded-full bg-slate-200">
             <span className="text-slate-400 text-[8px] font-bold">SEAL</span>
           </div>
           <p className="font-bold text-[10px]">DEPARTMENT OF THE AIR FORCE</p>
@@ -1243,6 +1276,7 @@ function Preview({
           </div>
         ) : null}
       </div>
-    </div>
+      </div>
+    </Card>
   );
 }
